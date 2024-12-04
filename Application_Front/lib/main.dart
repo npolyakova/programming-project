@@ -1,3 +1,5 @@
+import 'package:application_front/CORE/services/ApiClient.dart';
+import 'package:application_front/CORE/services/Authentication.dart';
 import 'package:application_front/UI/screens/AuthenticationMenu.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -14,6 +16,7 @@ class MyApp extends StatelessWidget
   Widget build(BuildContext context) 
   {
     testHttp();
+    print(Authentication.GetSha256("123"));
     return MaterialApp(
       title: 'Sirius Routing Demo',
       theme: ThemeData(
@@ -25,6 +28,14 @@ class MyApp extends StatelessWidget
   }
   void testHttp() async {
   try {
+
+    Authentication auth = Authentication();
+
+    auth.Login("blabla", 'pass');
+
+    final TestClient = await ApiClient(url: 'https://jsonplaceholder.typicode.com').Get('/posts/1');
+    print('Статус ответа: ${TestClient.statusCode}');
+    print('Тело ответа: ${TestClient.data}');
     final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts/1'));
     print('Статус ответа: ${response.statusCode}');
     print('Тело ответа: ${response.body}');

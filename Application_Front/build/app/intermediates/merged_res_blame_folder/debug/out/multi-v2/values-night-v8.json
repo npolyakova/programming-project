@@ -4,7 +4,7 @@
             "outputFile": "com.example.routing_sirius.app-mergeDebugResources-24:/values-night-v8/values-night-v8.xml",
             "map": [
                 {
-                    "source": "D:\\Sirius_Routing\\Routing_Sirius\\Application_Front\\android\\app\\src\\main\\res\\values-night\\styles.xml",
+                    "source": "C:\\Users\\User\\Documents\\GitHub\\Routing_Sirius\\Application_Front\\android\\app\\src\\main\\res\\values-night\\styles.xml",
                     "from": {
                         "startLines": "3,14",
                         "startColumns": "4,4",
