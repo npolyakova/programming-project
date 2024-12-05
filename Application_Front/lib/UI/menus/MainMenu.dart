@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:application_front/UI/screens/AuthenticationMenu.dart';
+import 'package:application_front/UI/menus/AuthenticationMenu.dart';
 
 class MainMenu extends StatefulWidget {
   const MainMenu({super.key, required this.title});

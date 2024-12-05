@@ -11,22 +11,10 @@ class ApiClient
     _dio = Dio(
       BaseOptions(
         baseUrl: url,
-        // connectTimeout: const Duration(seconds:  5),
-        // receiveTimeout: const Duration(seconds:  3),
-        // headers: {
-        //   'Content-Type': 'application/json',
-        //   'Accept': 'application/json',
-        // },
+        connectTimeout: const Duration(seconds:  5),
+        receiveTimeout: const Duration(seconds:  3),
       )
     );
-    // _dio.interceptors.add(LogInterceptor(
-    //   error: true,
-    //   requestBody: false,
-    //   responseBody: false,
-    //   requestHeader: false,
-    //   responseHeader: false,
-    //   request: false
-    // ));
   }
   Future<Response> Get(String path, {Map<String, dynamic>? queryParameters}) async {
     try {

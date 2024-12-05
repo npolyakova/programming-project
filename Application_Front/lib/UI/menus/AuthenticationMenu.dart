@@ -1,3 +1,4 @@
+import 'package:application_front/CORE/services/Authentication.dart';
 import 'package:application_front/UI/screens/LoginScreen.dart';
 import 'package:application_front/UI/widgets/SimpleButton.dart';
 import 'package:application_front/UI/widgets/SimpleTextField.dart';
@@ -18,40 +19,32 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
   TextEditingController loginInput = TextEditingController();
   TextEditingController passwordInput = TextEditingController();
 
+  late final SimpleButton interactiveButton;
+
+  late final SimpleTextField writeField;
+
+  bool _isLocding = false;
+
+  LoginScreen screen = LoginScreen();
+
   @override
   void initState() 
   {
     super.initState();
+    interactiveButton = SimpleButton(backgroundColor: LoginScreen.colorComponents);
+    writeField = SimpleTextField(backgroundColor: Colors.white);
     SystemChrome.setPreferredOrientations(
     [
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-  }
-
-  @override
-  void dispose() 
-  {
-    loginInput.dispose();
-    passwordInput.dispose();
-    super.dispose();
-    SystemChrome.setPreferredOrientations(
-    [
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) 
   {
-    LoginScreen screen = LoginScreen();
     Color bcColor = LoginScreen.colorComponents;
-    SimpleButton button = SimpleButton(backgroundColor: bcColor);
-    SimpleTextField writeField = SimpleTextField(backgroundColor: Colors.white);
+    interactiveButton.SetLock(_isLocding);
 
     Text title = Text(
     'Добрый день!',
@@ -68,7 +61,7 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
         const SizedBox(height: _smallSpacing),
         writeField.GetInput('Введите пароль', passwordInput, Icon(Icons.lock_outline) ,bcColor, true),
         const SizedBox(height: _verticalSpacing),
-        button.GetButton('Войти', () => {}),
+        interactiveButton.GetButton('Войти', ClickEnterAuth, Colors.white ,'Выполняется вход...'),
         const Spacer(),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -83,5 +76,47 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
       ]);
 
     return screen;
+  }
+  void ClickEnterAuth() async
+  {
+    if(_isLocding)
+    {
+      print('Я вызван в блоке');
+      return;
+    } 
+    setState(() {
+      _isLocding = true;
+    });
+    
+    Authentication auth = Authentication();
+    try
+    {
+      await auth.Login(loginInput.text, passwordInput.text);
+      Navigator.pushReplacementNamed(context, '/main');
+    }
+    catch(e)
+    {
+      screen.ShowErrorDialog(e.toString());
+    }
+    finally
+    {
+      setState(() {
+      _isLocding = false;
+    });
+    }
+  }
+  @override
+  void dispose() 
+  {
+    loginInput.dispose();
+    passwordInput.dispose();
+    super.dispose();
+    SystemChrome.setPreferredOrientations(
+    [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
   }
 }
