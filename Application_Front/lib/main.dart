@@ -1,6 +1,7 @@
 import 'package:application_front/CORE/services/ApiClient.dart';
 import 'package:application_front/CORE/services/Authentication.dart';
-import 'package:application_front/UI/screens/AuthenticationMenu.dart';
+import 'package:application_front/UI/menus/AuthenticationMenu.dart';
+import 'package:application_front/UI/screens/MainScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -15,17 +16,21 @@ class MyApp extends StatelessWidget
   @override
   Widget build(BuildContext context) 
   {
-    testHttp();
-    print(Authentication.GetSha256("123"));
     return MaterialApp(
       title: 'Sirius Routing Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 25, 0, 255)),
         useMaterial3: true,
       ),
-      home: AuthenticationMenu(),
+      routes: 
+      {
+        '/auth': (context) => AuthenticationMenu(),
+        '/main': (context) => MainScreen()
+      },
+      initialRoute: '/auth',
     );
   }
+
   void testHttp() async {
   try {
 
