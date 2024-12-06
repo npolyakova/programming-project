@@ -1,13 +1,12 @@
+import 'package:application_front/UI/widgets/InteractiveMap.dart';
 import 'package:flutter/material.dart';
 
-class MainScreen extends StatefulWidget {
-  @override
-  _MainScreenState createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  // Контроллер для свайпа
+class MainScreen extends StatelessWidget 
+{
+   // Контроллер для свайпа
   DraggableScrollableController _dragController = DraggableScrollableController();
+
+  MainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,30 +15,19 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           // Карта на весь экран
           Container(
+            height: double.infinity,
             color: Colors.grey[200], // Временный фон для карты
-            child: const Center(
-              child: Text('Тут будет карта с зумом'),
-              // Тут будет InteractiveViewer для зума карты:
-              /*
-              InteractiveViewer(
-                boundaryMargin: EdgeInsets.all(20),
-                minScale: 0.5,
-                maxScale: 4,
-                child: YourMapWidget(),
-              ),
-              */
-            ),
+            child: InteractiveMap()
           ),
 
-          // Свайпающееся меню снизу
           DraggableScrollableSheet(
             controller: _dragController,
-            initialChildSize: 0.4, // Начальная высота (40% экрана)
-            minChildSize: 0.1, // Минимальная высота (10% экрана)
+            initialChildSize: 0.35, // Начальная высота (35% экрана)
+            minChildSize: 0.04, // Минимальная высота (4% экрана)
             maxChildSize: 0.9, // Максимальная высота (90% экрана)
             snapAnimationDuration: const Duration(milliseconds: 300),
             snap: true,
-            snapSizes: const [0.1, 0.4, 0.9],
+            snapSizes: const [0.04, 0.35, 0.9],
             builder: (context, scrollController) {
               return Container(
                 decoration: BoxDecoration(
@@ -56,7 +44,6 @@ class _MainScreenState extends State<MainScreen> {
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // Индикатор свайпа
                     Center(
                       child: Container(
                         width: 40,
