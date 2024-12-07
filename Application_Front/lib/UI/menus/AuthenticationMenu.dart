@@ -81,7 +81,6 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
   {
     if(_isLocding)
     {
-      print('Я вызван в блоке');
       return;
     } 
     setState(() {

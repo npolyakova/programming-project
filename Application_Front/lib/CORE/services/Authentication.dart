@@ -15,8 +15,6 @@ class Authentication
 
   static UserResponse? get CurrentUser => _currentUser;
 
-  static bool debug = true;
-
   Future<void> Login(String login, String password, [Function? OnComplited = null]) async
   {
     if(CurrentUser != null)
@@ -35,12 +33,6 @@ class Authentication
 
   Future<UserResponse> _Login(LoginRequest request) async {
     try {
-      if(debug)
-      {
-        if(request.login == 'admin' && request.password == GetSha256('admin'))
-          return UserResponse(token: 'testToken');
-      }
-
       final response = await _client.Post(
         '/auth',
         data: request.toJson(),
