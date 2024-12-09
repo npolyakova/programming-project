@@ -49,9 +49,9 @@ class ApiClient {
   Future<Response> PostAuth({dynamic data}) async {
     try {
       String path = '/auth';
-      path += '?login=${data['login']}';//&password=${data['password']}';  
       final response = await _dio.post(
         path,
+        data: data
       );
       return response;
     } catch (e) {

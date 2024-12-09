@@ -96,7 +96,10 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
     }
     catch(e)
     {
-      screen.ShowErrorDialog(e.toString());
+      //Debug
+      Navigator.pushReplacementNamed(context, '/main');
+      //screen.ShowErrorDialog(e.toString());
+      //
     }
     finally
     {
