@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 class NodeMap extends StatelessWidget
 {
-  final double X,Y;
+  final double x,y;
 
-  final String Name, Description;
+  final int id;
 
-  const NodeMap({super.key, required this.X, required this.Y, required this.Name, required this.Description});
+  const NodeMap({super.key, required this.x, required this.y, required this.id});
   @override
   Widget build(BuildContext context) 
   {
     return Positioned(
-      right: X,
-      top: Y,
+      right: x,
+      top: y,
       child: _GetPoint(),
     );
   }
@@ -21,5 +21,4 @@ class NodeMap extends StatelessWidget
   {
     return Container(width: 10, height: 10,color: Colors.red,);
   }
-
 }

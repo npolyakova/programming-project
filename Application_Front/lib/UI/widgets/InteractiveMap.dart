@@ -24,10 +24,10 @@ class _InteractiveMap extends State<InteractiveMap>
      _mapImage = Image.asset('Resources/MainMapTest.jpg');
      nodes = 
      [
-      NodeMap(X: 10, Y: 10, Name: '1', Description: ''),
-      NodeMap(X: 30, Y: 10, Name: '2', Description: ''),
-      NodeMap(X: 50, Y: 10, Name: '3', Description: ''),
-      NodeMap(X: 70, Y: 10, Name: '4', Description: ''),
+      NodeMap(x: 10, y: 10, id: 1),
+      NodeMap(x: 30, y: 10, id: 2),
+      NodeMap(x: 50, y: 10, id: 3),
+      NodeMap(x: 70, y: 10, id: 4),
      ];
     super.initState();
   }

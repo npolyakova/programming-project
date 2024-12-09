@@ -35,18 +35,20 @@ class Authentication
 
   Future<UserResponse> _Login(LoginRequest request) async {
     try {
-      if(debug)
-      {
-        if(request.login == 'admin' && request.password == GetSha256('admin'))
-          return UserResponse(token: 'testToken');
-      }
-
       final response = await _client.Post(
         '/auth',
-        data: request.toJson(),
+        data: 
+        {
+          'login': request.login,
+         // 'password': 'your_password'
+        },
       );
-      
-      return UserResponse.fromJson(response.data);
+      UserResponse user = UserResponse.fromJson(response.data);
+
+      final response2 = await _client.Get('/protected', user);
+      ProtectedResponse resp = ProtectedResponse.fromJson(response2.data);
+      print(response2.data);
+      return user;
     } catch (e) {
       throw Exception('Ошибка аутентификации: ${e.toString()}');
     }
