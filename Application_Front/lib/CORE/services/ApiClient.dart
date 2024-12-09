@@ -29,29 +29,30 @@ class ApiClient {
     return headers;
   }
 
-  Future<Response> Get(String path, UserResponse user, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> Get(String path, UserInfo user, {Map<String, dynamic>? queryParameters}) async {
     try {
-      final response = await _dio.get(
-        path,
-        queryParameters: queryParameters,
-        options: Options(headers: _GetHeaders(user.token)),
-      );
-      return response;
+      Response? response;
+      await user.UseToken((token) async => 
+      {
+        response = await _dio.get(
+          path,
+          queryParameters: queryParameters,
+          options: Options(headers: _GetHeaders(token)),
+        )
+      });
+      return response!;
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<Response> Post(String path, {dynamic data}) async {
+  Future<Response> PostAuth({dynamic data}) async {
     try {
-       if (path == '/auth') {
-      path += '?login=${data['login']}';  
-      }
-
+      String path = '/auth';
+      path += '?login=${data['login']}';//&password=${data['password']}';  
       final response = await _dio.post(
         path,
       );
-
       return response;
     } catch (e) {
       throw _handleError(e);

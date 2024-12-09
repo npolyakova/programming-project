@@ -1,5 +1,3 @@
-import 'package:application_front/CORE/repositories/RoomData.dart';
-
 class PathOfID
 {
    final List<int> path;

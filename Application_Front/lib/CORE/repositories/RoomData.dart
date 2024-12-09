@@ -41,16 +41,19 @@ class RoomData
   final int floor;
   final int parent;
   final String name;
+  
+  final RoomBounds bounds;
 
-  RoomData({required this.id, required this.floor, required this.parent, required this.name});
+  RoomData({required this.id, required this.floor, required this.parent, required this.name, required this.bounds});
 
   factory RoomData.ToJson(Map<String, dynamic> json)
   {
     return RoomData(
-      id: json['room_id'],
-      floor: json['floor'],
-      parent: json['parent'],
-      name: json['name'],
+      id: json['room_id'] ?? -1,
+      floor: json['floor'] ?? -1,
+      parent: json['parent'] ?? -1,
+      name: json['name'] ?? 'none',
+      bounds: RoomBounds.ToJson(json['bounds'])
     );
   }
 

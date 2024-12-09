@@ -1,32 +1,45 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class UserResponse
+class UserInfo
 {
-  final String token;
-  UserResponse(
+  static const String tokenKey = 'token';
+  static const String userIDKey = 'user_id';
+  late FlutterSecureStorage storage;
+  late int userID = -1;
+
+  Future<void> SetToken(Map<String, dynamic> json) async
   {
-    required this.token
-  });
-  factory UserResponse.fromJson(Map<String, dynamic> json)
-  {
-    return UserResponse(token: json['token']);
+    if(await storage.containsKey(key: tokenKey))
+    {
+      return;
+    }
+    await storage.write(key: tokenKey, value: json[tokenKey]);
   }
-  
-}
 
-class ProtectedResponse {
-  final String message;
-  final int userId;
+  Future<void> UseToken(Function(String token) usable) async
+  {
+    String? token = await storage.read(key: tokenKey);
+    if(token == null) throw Exception('Вы не авторизованы');
+    usable(token);
+  }
 
-  ProtectedResponse({
-    required this.message,
-    required this.userId,
-  });
+  void SetUserInfo(Map<String, dynamic> json)
+  {
+    _SetUserID(json);
+  }
 
-  factory ProtectedResponse.fromJson(Map<String, dynamic> json) {
-    return ProtectedResponse(
-      message: json['message'],
-      userId: json['user_id'],
-    );
+  void _SetUserID(Map<String, dynamic> json)
+  {
+    if(userID != -1) 
+    {
+      return;
+    }
+    userID = json[userIDKey] ?? 0;
+  }
+  void Delete()
+  {
+    userID = -1;
+    storage.deleteAll();
   }
 }
 
