@@ -1,12 +1,24 @@
 import 'package:application_front/UI/widgets/InteractiveMap.dart';
 import 'package:flutter/material.dart';
 
-class MainScreen extends StatelessWidget 
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen>
 {
-   // Контроллер для свайпа
   DraggableScrollableController _dragController = DraggableScrollableController();
 
-  MainScreen({super.key});
+  String _selectedRoomName = 'Откуда';
+
+  void _handleRoomTap(String roomName, int roomId) {
+    setState(() {
+    _selectedRoomName = roomName;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +29,7 @@ class MainScreen extends StatelessWidget
           Container(
             height: double.infinity,
             color: Colors.grey[200], // Временный фон для карты
-            child: InteractiveMap()
+            child: InteractiveMap(onRoomTap: _handleRoomTap)
           ),
 
           DraggableScrollableSheet(
@@ -65,21 +77,28 @@ class MainScreen extends StatelessWidget
                     const SizedBox(height: 8),
 
                     // Поля выбора маршрута (пока заглушки)
-                    Container(
-                      height: 40, // Уменьшенная высота
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(8),
+                     Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on_outlined, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              _selectedRoomName,
+                              style: TextStyle(
+                                color: _selectedRoomName == 'Откуда' 
+                                  ? Colors.grey 
+                                  : Colors.black
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.location_on_outlined, size: 20),
-                          SizedBox(width: 8),
-                          Text('Откуда', style: TextStyle(color: Colors.grey)),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 8),
 
                     Container(
