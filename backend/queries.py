@@ -28,3 +28,14 @@ def check_auth_sql_query(user_id: int):
         curs.execute("SELECT id FROM users WHERE id = %s", (user_id,))
         user = curs.fetchone()
     return user
+
+
+def get_rooms_sql_query(query: str):
+    with conn.cursor() as curs:
+        # Выполняем запрос на основе наличия параметра query
+        if query:
+            curs.execute("SELECT name, floor, id, map_points FROM rooms WHERE name LIKE %s", (query,))
+        else:
+            curs.execute("SELECT name, floor, id, map_points FROM rooms")
+        rooms = curs.fetchall()
+    return rooms

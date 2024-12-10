@@ -76,3 +76,33 @@ async def get_user_token(login: str, password: str):
 @app.get("/protected")
 async def protected_route(request: Request, token: str = Depends(check_access_token)):
     return {"message": "You have access!", "user_id": request.state.user}
+
+# Получение аудиторий
+@app.get("/rooms")
+async def get_rooms_list(request: Request, token: str = Depends(check_access_token), query: str = Query(None)):
+    if request.state.user:
+        query_str = f"%{query}%" if query else None
+        rooms = queries.get_rooms_sql_query(query_str)
+
+        rooms_list = []
+        for room in rooms:
+            bounds = room[3]
+            
+            if bounds and len(bounds) % 2 == 0:
+                bounds_pairs = [{"x": int(bounds[i]), "y": int(bounds[i + 1])} for i in range(0, len(bounds), 2)]
+            else:
+                bounds_pairs = [] 
+            
+            rooms_list.append({
+                "name": room[0],
+                "floor": room[1],
+                "id": room[2],
+                "bounds": bounds_pairs
+            })
+
+        return {
+            "message": "You have access!",
+            "rooms": rooms_list,
+            "user_id": request.state.user,
+            "query": query,
+        }
