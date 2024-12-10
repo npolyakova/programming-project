@@ -19,8 +19,6 @@ class Authentication
     if(CurrentUser != null)
       throw Exception('Вы уже вошли');
 
-    await Future.delayed(Duration(seconds: 3));
-
     _currentUser = await _Login(login);
 
     OnComplited?.call();
@@ -28,12 +26,10 @@ class Authentication
 
   Future<UserInfo> _Login(LoginRequest request) async {
     try {
-      final response = await _client.PostAuth(
-        data: request.toJson(),
-      );
+      final response = await _client.PostAuth(request);
       UserInfo user = UserInfo();
 
-      user.SetToken(response.data);
+      await user.SetToken(response.data);
 
       final response2 = await _client.Get('/protected', user);
       user.SetUserInfo(response2.data);

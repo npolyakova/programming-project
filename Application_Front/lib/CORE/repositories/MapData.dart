@@ -7,7 +7,7 @@ import 'package:dio/dio.dart';
 
 class MapData
 {
-  static const String room_id = 'room_id', floor = 'floor', parent = 'parent', bounds = 'bounds', name = 'name';
+  static const String room_id = 'id', floor = 'floor', parent = 'parent', bounds = 'bounds', name = 'name';
 
   final ApiClient _apiClient = ApiClient(url: DataApplication.urlService);
 
@@ -72,24 +72,32 @@ class MapData
 
   Future<void> GetRoomData() async
   {
-    // if(Authentication.CurrentUser == null)
-    // {
-    //   throw Exception('Вы не авторизованы');
-    // }
-    var answer;
+    if(Authentication.CurrentUser == null)
+    {
+      throw Exception('Вы не авторизованы');
+    }
     try
     {
-      answer = await _apiClient.Get('/rooms', Authentication.CurrentUser!);
+      final response = await _apiClient.Get('/rooms', Authentication.CurrentUser!);
+    if (response.data == null) throw Exception('Пустой ответ от сервера');
+    
+    final roomsList = response.data['rooms'] as List<dynamic>;
+    for(var room in roomsList) {
+        int id = room['id'];
+        rooms[id] = RoomData(
+            id: id, 
+            floor: room['floor'], 
+            parent: room['parent'] ?? -1, 
+            name: room['name'],
+            bounds: RoomBounds.Create(id, room['bounds']
+            )
+        );
+    }
     }
     catch(e)
     {
-      //Debug
-      answer = Response(data: testJson, requestOptions: RequestOptions()); 
-    }
-    for(var room in answer.data['rooms'].entries)
-    {
-      rooms[room.value[room_id]] = RoomData(id: room.value[room_id], floor: room.value[floor], parent: room.value[parent], name: room.value[name],
-       bounds: RoomBounds.ToJson(room.value[bounds]));
+      print('Ошибка при загрузке комнат: $e');
+      throw Exception('Не удалось загрузить комнаты: $e');
     }
   } 
 

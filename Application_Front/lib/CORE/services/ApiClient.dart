@@ -1,4 +1,5 @@
 import 'package:application_front/CORE/repositories/User.dart';
+import '../repositories/LoginRequest.dart';
 import 'package:dio/dio.dart';
 
 class ApiClient {
@@ -31,14 +32,14 @@ class ApiClient {
 
   Future<Response> Get(String path, UserInfo user, {Map<String, dynamic>? queryParameters}) async {
     try {
-      Response? response;
-      await user.UseToken((token) async => 
+      late Response response;
+      await user.UseToken((token) async
       {
         response = await _dio.get(
           path,
           queryParameters: queryParameters,
           options: Options(headers: _GetHeaders(token)),
-        )
+        );
       });
       return response!;
     } catch (e) {
@@ -46,12 +47,14 @@ class ApiClient {
     }
   }
 
-  Future<Response> PostAuth({dynamic data}) async {
+  Future<Response> PostAuth(LoginRequest data) async {
     try {
       String path = '/auth';
+      
+      path += "?login=${data.login}&password=${data.password}";
+
       final response = await _dio.post(
         path,
-        data: data
       );
       return response;
     } catch (e) {

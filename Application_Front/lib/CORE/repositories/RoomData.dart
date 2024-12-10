@@ -12,8 +12,8 @@ class Vector2
   factory Vector2.ToJson(Map<String, dynamic> json)
   {
     return Vector2(
-      x: (json['x'] ?? 0).toDouble(),
-      y: (json['y'] ?? 0).toDouble());
+      x: (json['x'] ?? 0).toDouble() / 2.5,
+      y: (json['y'] ?? 0).toDouble() / 2.5);
   }
 }
 
@@ -26,12 +26,11 @@ class RoomBounds {
     required this.bounds,
   });
 
-  factory RoomBounds.ToJson(Map<String, dynamic> json) {
+  factory RoomBounds.Create(int id,List<dynamic> json) {
     return RoomBounds(
-      id: json['room_id'],
-      bounds: (json['bounds'] as List<dynamic>?)
-            ?.map((e) => Vector2.ToJson(e as Map<String, dynamic>))
-            .toList() ?? []
+      id: id,
+      bounds: json.map((e) => Vector2.ToJson(e))
+            .toList()
     );
   }
 }
@@ -50,13 +49,12 @@ class RoomData
   factory RoomData.ToJson(Map<String, dynamic> json)
   {
     return RoomData(
-      id: json['room_id'] ?? -1,
+      id: json['id'] ?? -1,
       floor: json['floor'] ?? -1,
       parent: json['parent'] ?? -1,
       name: json['name'] ?? 'none',
-      bounds: RoomBounds.ToJson(json['bounds'])
+      bounds: RoomBounds.Create(json['id'],json['bounds'])
     );
-    
   }
 
   bool isClickInside(double x, double y) {

@@ -4,12 +4,12 @@ class UserInfo
 {
   static const String tokenKey = 'token';
   static const String userIDKey = 'user_id';
-  late FlutterSecureStorage storage;
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
   late int userID = -1;
 
   Future<void> SetToken(Map<String, dynamic> json) async
   {
-    if(await storage.containsKey(key: tokenKey))
+    if(!await storage.containsKey(key: tokenKey))
     {
       return;
     }
@@ -20,7 +20,7 @@ class UserInfo
   {
     String? token = await storage.read(key: tokenKey);
     if(token == null) throw Exception('Вы не авторизованы');
-    usable(token);
+    await usable(token);
   }
 
   void SetUserInfo(Map<String, dynamic> json)
