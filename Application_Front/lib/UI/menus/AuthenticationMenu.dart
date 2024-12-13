@@ -1,3 +1,4 @@
+import 'package:application_front/CORE/repositories/LoginRequest.dart';
 import 'package:application_front/CORE/services/Authentication.dart';
 import 'package:application_front/UI/screens/LoginScreen.dart';
 import 'package:application_front/UI/widgets/SimpleButton.dart';
@@ -90,12 +91,13 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
     Authentication auth = Authentication();
     try
     {
-      await auth.Login(loginInput.text, passwordInput.text);
+      await auth.Login(LoginRequest.Create(loginInput.text, passwordInput.text));
       Navigator.pushReplacementNamed(context, '/main');
     }
     catch(e)
     {
       screen.ShowErrorDialog(e.toString());
+      
     }
     finally
     {

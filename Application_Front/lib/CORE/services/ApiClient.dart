@@ -1,39 +1,68 @@
+import 'package:application_front/CORE/repositories/User.dart';
+import '../repositories/LoginRequest.dart';
 import 'package:dio/dio.dart';
 
-class ApiClient 
-{
+class ApiClient {
   final String url;
-
   late final Dio _dio;
 
-  ApiClient({required this.url})
-  {
+  ApiClient({required this.url}) {
     _dio = Dio(
       BaseOptions(
         baseUrl: url,
-        connectTimeout: const Duration(seconds:  5),
-        receiveTimeout: const Duration(seconds:  3),
-      )
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 3),
+        contentType: Headers.formUrlEncodedContentType, // Важное изменение!
+      ),
     );
+    _dio.interceptors.add(LogInterceptor(
+    requestBody: true,
+    responseBody: true,
+  ));
   }
-  Future<Response> Get(String path, {Map<String, dynamic>? queryParameters}) async {
+
+  Map<String, dynamic> _GetHeaders(String? _authToken) {
+    final headers = <String, dynamic>{};
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+      headers['Content-Type'] = 'application/json';
+    }
+    return headers;
+  }
+
+  Future<Response> Get(String path, UserInfo user, {Map<String, dynamic>? queryParameters}) async {
     try {
-      final response = await _dio.get(path, queryParameters: queryParameters);
-      return response;
+      late Response response;
+      await user.UseToken((token) async
+      {
+        response = await _dio.get(
+          path,
+          queryParameters: queryParameters,
+          options: Options(headers: _GetHeaders(token)),
+        );
+      });
+      return response!;
     } catch (e) {
-      throw _HandleError(e);
+      throw _handleError(e);
     }
   }
 
-  Future<Response> Post(String path, {dynamic data}) async {
+  Future<Response> PostAuth(LoginRequest data) async {
     try {
-      final response = await _dio.post(path, data: data);
+      String path = '/auth';
+      
+      path += "?login=${data.login}&password=${data.password}";
+
+      final response = await _dio.post(
+        path,
+      );
       return response;
     } catch (e) {
-      throw _HandleError(e);
+      throw _handleError(e);
     }
   }
-  Exception _HandleError(dynamic error) {
+
+  Exception _handleError(dynamic error) {
     if (error is DioException) {
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
@@ -45,8 +74,12 @@ class ApiClient
             return Exception('Неавторизован');
           }
           return Exception('Ошибка сервера: ${error.response?.statusCode}');
+        case DioExceptionType.cancel:
+          return Exception('Запрос был отменен');
+        case DioExceptionType.badCertificate:
+          return Exception('Ошибка сертификата');
         default:
-          return Exception('Произошла ошибка при запросе');
+          return Exception('Произошла ошибка при запросе: ${error.message}');
       }
     }
     return Exception('Неизвестная ошибка');
