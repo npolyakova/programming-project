@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Request, Security, Depends, HTTPException, Query
+from fastapi import FastAPI, Request, Security, Depends, HTTPException, Body
 from fastapi.security import APIKeyHeader
-import psycopg2
 import jwt
 from jwt import InvalidTokenError
-from config import DATABASE_CONFIG
-from config import JWT_SECRET
-import queries
+
+from app.config import JWT_SECRET
+from app import queries
+
 
 # Middleware/зависимость для проверки токена
 async def check_access_token(
@@ -55,8 +55,10 @@ def read_root():
 
 #Авторизация с генерацией токена и его возвратом
 @app.post("/auth")
-async def get_user_token(login: str, password: str):
+async def get_user_token(data = Body()):
     # Используем вынесенную функцию для выполнения SQL-запроса
+    login = data["login"]
+    password = data["password"]
     user = queries.auth_sql_query(login)
 
     if not user:
