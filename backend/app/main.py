@@ -89,11 +89,16 @@ async def get_rooms_list(request: Request, token: str = Depends(check_access_tok
         rooms_list = []
         for room in rooms:
             bounds = room[3]
-            
-            if bounds and len(bounds) % 2 == 0:
-                bounds_pairs = [{"x": int(bounds[i]), "y": int(bounds[i + 1])} for i in range(0, len(bounds), 2)]
+
+            bounds_items = []
+            for item in bounds:
+                bounds_items = list(map(int, item.split()))
+
+            if bounds_items and len(bounds_items) % 2 == 0:
+                bounds_pairs = [{"x": int(bounds_items[i]), "y": int(bounds_items[i + 1])} for i in
+                                range(0, len(bounds_items), 2)]
             else:
-                bounds_pairs = [] 
+                bounds_pairs = []
             
             rooms_list.append({
                 "name": room[0],
