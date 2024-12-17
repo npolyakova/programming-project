@@ -106,3 +106,9 @@ async def get_rooms_list(request: Request, token: str = Depends(check_access_tok
             "user_id": request.state.user,
             "query": query,
         }
+
+#Строим маршрут
+@app.get("/route")
+def get_route(roomstart:int, roomend:int):
+	route = queries.get_rooms_point(roomstart,roomend)
+	return {"route": route}
