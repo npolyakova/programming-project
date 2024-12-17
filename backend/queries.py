@@ -47,16 +47,6 @@ def get_rooms_point(start: int, end: int):
         curs.execute("SELECT id_route_point FROM rooms WHERE id IN (%s, %s)",(start, end))
         rooms_point_id = curs.fetchall()
     (point_id_r1, point_id_r2) = rooms_point_id[0][0], rooms_point_id[1][0]
-
-    #with conn.cursor() as curs:
-    #    curs.execute("SELECT points FROM route_points WHERE id IN (%s, %s)",(point_id_r1, point_id_r2))
-    #    rooms_point = curs.fetchall()
-    #(start_point, end_point) = rooms_point[0][0], rooms_point[1][0]
-    #routes_list = []
-    #routes_list.append({
-    #    "start": start_point,
-    #    "end": end_point
-    #})
     graph_data = get_graph_data()
     routes_list_id =  bfs(graph_data, point_id_r1, point_id_r2)
     with conn.cursor() as curs:
