@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Security, Depends, HTTPException, Body
+from fastapi import FastAPI, Request, Security, Depends, HTTPException, Body, Query
 from fastapi.security import APIKeyHeader
 import jwt
 from jwt import InvalidTokenError
