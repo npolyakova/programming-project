@@ -1,0 +1,19 @@
+name: build
+
+on:
+  push:
+    branches: 
+    - "api*"
+    - "*"
+
+jobs:
+  build:
+    runs-on: self-hosted
+      
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: run app
+        run: |
+          cd ./backend
+          sudo docker compose up -d --build

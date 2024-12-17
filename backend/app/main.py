@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Request, Security, Depends, HTTPException, Query
+from fastapi import FastAPI, Request, Security, Depends, HTTPException, Body, Query
 from fastapi.security import APIKeyHeader
-import psycopg2
 import jwt
 from jwt import InvalidTokenError
-from config import DATABASE_CONFIG
-from config import JWT_SECRET
-import queries
+
+from app.config import JWT_SECRET
+from app import queries
+
 
 # Middleware/зависимость для проверки токена
 async def check_access_token(
@@ -55,8 +55,10 @@ def read_root():
 
 #Авторизация с генерацией токена и его возвратом
 @app.post("/auth")
-async def get_user_token(login: str, password: str):
+async def get_user_token(data = Body()):
     # Используем вынесенную функцию для выполнения SQL-запроса
+    login = data["login"]
+    password = data["password"]
     user = queries.auth_sql_query(login)
 
     if not user:
@@ -87,11 +89,16 @@ async def get_rooms_list(request: Request, token: str = Depends(check_access_tok
         rooms_list = []
         for room in rooms:
             bounds = room[3]
-            
-            if bounds and len(bounds) % 2 == 0:
-                bounds_pairs = [{"x": int(bounds[i]), "y": int(bounds[i + 1])} for i in range(0, len(bounds), 2)]
+
+            bounds_items = []
+            for item in bounds:
+                bounds_items = list(map(int, item.split()))
+
+            if bounds_items and len(bounds_items) % 2 == 0:
+                bounds_pairs = [{"x": int(bounds_items[i]), "y": int(bounds_items[i + 1])} for i in
+                                range(0, len(bounds_items), 2)]
             else:
-                bounds_pairs = [] 
+                bounds_pairs = []
             
             rooms_list.append({
                 "name": room[0],

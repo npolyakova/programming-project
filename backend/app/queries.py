@@ -1,13 +1,10 @@
-from config import DATABASE_CONFIG
 import psycopg2
+
+from app.config import DATABASE_CONFIG
+
 # Подключение к базе данных
 try:
-    conn = psycopg2.connect(
-        dbname=DATABASE_CONFIG["dbname"],
-        user=DATABASE_CONFIG["user"],
-        password=DATABASE_CONFIG["password"],
-        host=DATABASE_CONFIG["host"],
-    )
+    conn = psycopg2.connect(f'postgresql://{DATABASE_CONFIG["user"]}:{DATABASE_CONFIG["password"]}@postgres:5432/{DATABASE_CONFIG["dbname"]}')
 except Exception as e:
     print(f"Failed to connect to the database: {e}")
     conn = None
