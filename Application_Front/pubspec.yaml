@@ -18,6 +18,8 @@ dependencies:
 
 
   cupertino_icons: ^1.0.8
+  vector_math: ^2.1.4
+  flutter_svg: ^2.0.16
 
 dev_dependencies:
   flutter_test:
@@ -28,5 +30,6 @@ dev_dependencies:
 flutter:
   assets:
     - Resources/
+    - Resources/MainMap.svg
     
   uses-material-design: true

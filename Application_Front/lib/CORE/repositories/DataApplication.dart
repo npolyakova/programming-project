@@ -1,5 +1,5 @@
 
 class DataApplication 
 {
-  static const String urlService = 'http://83.222.27.166:8000';
+  static const String urlService = 'http://176.108.253.3:8080';
 }

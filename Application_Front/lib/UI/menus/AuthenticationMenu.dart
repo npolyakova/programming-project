@@ -1,3 +1,4 @@
+import 'package:application_front/CORE/repositories/LoginRequest.dart';
 import 'package:application_front/CORE/services/Authentication.dart';
 import 'package:application_front/UI/screens/LoginScreen.dart';
 import 'package:application_front/UI/widgets/SimpleButton.dart';
@@ -63,16 +64,16 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
         const SizedBox(height: _verticalSpacing),
         interactiveButton.GetButton('Войти', ClickEnterAuth, Colors.white ,'Выполняется вход...'),
         const Spacer(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Нет аккаунта? '),
-            TextButton(
-              onPressed: () {},
-              child: Text('Зарегистрируйтесь', style: TextStyle(color: bcColor, fontSize: 17)),
-            ),
-          ],
-        ),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        //     Text('Нет аккаунта? '),
+        //     TextButton(
+        //       onPressed: () {},
+        //       child: Text('Зарегистрируйтесь', style: TextStyle(color: bcColor, fontSize: 17)),
+        //     ),
+        //   ],
+        // ),
       ]);
 
     return screen;
@@ -90,12 +91,13 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
     Authentication auth = Authentication();
     try
     {
-      await auth.Login(loginInput.text, passwordInput.text);
+      await auth.Login(LoginRequest.Create(loginInput.text, passwordInput.text));
       Navigator.pushReplacementNamed(context, '/main');
     }
     catch(e)
     {
       screen.ShowErrorDialog(e.toString());
+      
     }
     finally
     {

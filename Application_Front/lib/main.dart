@@ -1,8 +1,8 @@
 import 'package:application_front/CORE/services/ApiClient.dart';
 import 'package:application_front/CORE/services/Authentication.dart';
 import 'package:application_front/UI/menus/AuthenticationMenu.dart';
+import 'package:application_front/UI/screens/MainScreen.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -24,10 +24,12 @@ class MyApp extends StatelessWidget
       routes: 
       {
         '/auth': (context) => AuthenticationMenu(),
+        '/main': (context) => MainScreen()
       },
       initialRoute: '/auth',
     );
   }
+
 }
 
 
