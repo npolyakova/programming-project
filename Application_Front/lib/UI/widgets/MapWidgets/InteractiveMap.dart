@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:application_front/CORE/repositories/MapCoordinateTransformer.dart';
 import 'package:application_front/CORE/repositories/MapData.dart';
@@ -8,8 +9,6 @@ import 'package:application_front/CORE/repositories/NodeMap.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
-
-import 'package:vector_math/vector_math_64.dart';
 
 class InteractiveMap extends StatefulWidget
 {
@@ -35,8 +34,6 @@ class _InteractiveMap extends State<InteractiveMap>
   late final MapData _mapData;
 
   bool _isDataLoaded = false;
-
-  final TransformationController _transformationController = TransformationController();
 
   late final Function(String, int) OnTap;
 
@@ -73,25 +70,6 @@ class _InteractiveMap extends State<InteractiveMap>
     final picture = await vg.loadPicture(SvgAssetLoader(assetName), null);
     return picture.size;
   }
-
-   Offset transformOffset(TapDownDetails details, BuildContext context) {
-    // Получаем матрицу трансформации
-    final Matrix4 transform = _transformationController.value;
-
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final Offset localPosition = renderBox.globalToLocal(details.globalPosition);
-    
-    // Инвертируем матрицу для получения реальных координат
-    final Matrix4 invertedMatrix = Matrix4.inverted(transform);
-    
-    // Преобразуем координаты тапа
-    final Vector3 position = invertedMatrix.transform3(
-      Vector3(localPosition.dx, localPosition.dy, 0)
-    );
-    
-    return Offset(position.x, position.y);
-  }
-
   @override
  Widget build(BuildContext context) {
     return FutureBuilder(
@@ -113,10 +91,10 @@ class _InteractiveMap extends State<InteractiveMap>
             minScale: 0.5,
             maxScale: 100,
             child: LayoutBuilder(
-              builder: (contextThis, constraints) {
+              builder: (context, constraints) {
                 // Получаем актуальные размеры для масштабирования
                  final svgScale = _originalSvgSize.width/1280; // коэффициент масштабирования SVG/База
-                  
+    
                   // Получаем актуальные размеры для масштабирования
                   final Size actualSize = Size(
                     constraints.maxWidth,
@@ -156,9 +134,7 @@ class _InteractiveMap extends State<InteractiveMap>
                     ..._mapData.rooms.values.map((room) {
                       return room.GetRoomButton(
                         widget.onRoomTap,
-                        transformOffset: calculatePosition, 
-                        transformToLayout: transformOffset, // Передаем функцию трансформации
-                        contextTo: contextThis
+                        transformOffset: calculatePosition  // Передаем функцию трансформации
                       );
                     }).toList(),
                   ],

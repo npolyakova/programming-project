@@ -90,7 +90,7 @@ class RoomData
   
   final RoomBounds bounds;
 
-  late Widget currentButtonWidget;
+
 
   RoomData({required this.id, required this.floor, required this.parent, required this.name, required this.bounds});
 
@@ -106,9 +106,9 @@ class RoomData
   }
 
   bool isClickInside(double x, double y) {
-    //Rect boundingBox = getBoundingBox();
-    double mapX = x ;//+ currentButtonWidget.//boundingBox.left;
-    double mapY = y ;//+ //boundingBox.top;
+    Rect boundingBox = getBoundingBox();
+    double mapX = x + boundingBox.left;
+    double mapY = y + boundingBox.top;
     return _PointInPolygonChecker.isPointInPolygon(bounds.bounds, mapX, mapY);
   }
 
@@ -134,15 +134,12 @@ class RoomData
   }
 
   Widget GetRoomButton(Function(String name, int id) OnTap, 
-    {Function(Offset)? transformOffset,
-     required BuildContext contextTo,
-    required Offset Function(TapDownDetails details, BuildContext context) transformToLayout})
+    {Function(Offset)? transformOffset})
   {
      if (bounds.bounds.isEmpty) {
         return const SizedBox.shrink();
       }
-      currentButtonWidget = _ClickableRoomBounds(data: this, onTap: OnTap, transformOffset: transformOffset ?? ((offset) => offset),transformToLayout: transformToLayout, contextTo: contextTo);
-      return currentButtonWidget;
+      return _ClickableRoomBounds(data: this, onTap: OnTap, transformOffset: transformOffset ?? ((offset) => offset),);
   }
 }
 
@@ -151,32 +148,22 @@ class _ClickableRoomBounds extends StatefulWidget {
   final RoomData data;
   final Function(String name, int id) onTap;
   final Function(Offset p1) transformOffset;
-  final Offset Function(TapDownDetails details, BuildContext context) transformToLayout;
-  final BuildContext contextTo;
 
   _ClickableRoomBounds({
     required this.data,
     required this.onTap, required this.transformOffset,
-    required this.transformToLayout,
-    required this.contextTo,
   });
 
   @override
-  _ClickableRoomBoundsState createState() => _ClickableRoomBoundsState(transformToLayout:transformToLayout,contextTo:contextTo);
+  _ClickableRoomBoundsState createState() => _ClickableRoomBoundsState();
 }
 
 class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
 
-  final Offset Function(TapDownDetails details, BuildContext context) transformToLayout;
-  final BuildContext contextTo;
-  
   bool _isPressed = false;
   Timer? _timer;
 
-  _ClickableRoomBoundsState({required this.transformToLayout, required this.contextTo});
-
   void _handleTapDown(TapDownDetails details) {
-    Offset clickPoint = transformToLayout(details,contextTo);
     if (widget.data.isClickInside(details.localPosition.dx, details.localPosition.dy)) {
       setState(() => _isPressed = true);
       widget.onTap(widget.data.name, widget.data.id);
@@ -246,56 +233,36 @@ class _PointInPolygonChecker {
   /// Проверяет, находится ли точка внутри полигона
   static bool isPointInPolygon(List<Vector2> polygon, double px, double py) {
     if (polygon.length < 3) return false;
-    print("=== Начинаем проверку точки ===");
-    print("=== Точка $px , $py ===");
-    // Пускаем луч достаточно далеко вправо
-    Vector2 rayEnd = new Vector2(x:px + 10000,y: py); 
-    print("=== Конец луча $rayEnd ===");
-    int intersections = 0;
-    
-    for (int i = 0; i < polygon.length - 1; i++) {
-        Vector2 p1 = polygon[i];
-        Vector2 p2 = polygon[(i + 1) % polygon.length];
 
-        print("=== Проверяем отрезок $p1 , $p2 ===");
-        
-        // Используем наш метод проверки пересечения
-        if (checkIntersection(new Vector2(x:px,y:py), rayEnd, p1, p2)) {
-            intersections++;
-            print("Есть пересечение: $intersections");
+      px = (px * 10).round() / 100;
+      py = (py * 10).round() / 100;
+      
+      const double EPSILON = 0.1; 
+      
+      int crossings = 0;
+      for (int i = 0; i < polygon.length; i++) {
+        int j = (i + 1) % polygon.length;
+        print('Edge ${i}->${j}: (${polygon[i].x},${polygon[i].y}) -> (${polygon[j].x},${polygon[j].y})');
+        // Проверка, находится ли Y-координата точки между Y-координатами вершин
+        if ((polygon[i].y <= py && py < polygon[j].y) || 
+            (polygon[j].y <= py && py < polygon[i].y)) {
+          
+          // Вычисляем X-координату пересечения
+          double x = polygon[i].x + 
+                    (py - polygon[i].y) * 
+                    (polygon[j].x - polygon[i].x) / 
+                    (polygon[j].y - polygon[i].y);
+                    
+          // Если точка находится левее линии - считаем пересечение
+          if (px < x + EPSILON) {
+            crossings++;
+            print('Crossing at x=$x (point.x=$px)');
+          }
         }
-    }
-    final text = (intersections % 2 == 1 ? "ВНУТРИ" : "СНАРУЖИ");
-    print("Точка $text полигона");
-    return intersections % 2 == 1;
-  }
-  static bool checkIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4) {
-    // Сначала проверяем направление векторов
-    Vector2 dir1 = p2 - p1;
-    Vector2 dir2 = p4 - p3;
-    
-    // Если направление отрицательное - меняем точки местами
-    if (dir1.normalized.x < 0 || (dir1.normalized.x == 0 && dir1.normalized.y < 0)) {
-        var temp = p1;
-        p1 = p2;
-        p2 = temp;
-    }
-    
-    if (dir2.normalized.x < 0 || (dir2.normalized.x == 0 && dir2.normalized.y < 0)) {
-        var temp = p3;
-        p3 = p4;
-        p4 = temp;
-    }
-    
-    // Теперь считаем пересечение с правильно ориентированными векторами
-    double denominator = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
-    
-    if (denominator == 0) return false;
-    
-    double ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denominator;
-    double ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denominator;
-    
-    return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
+      }
+      
+      print('Point ($px,$py) has $crossings crossings');
+      return (crossings % 2) == 0;
   }
   static double isLeft(Vector2 p0, Vector2 p1, Vector2 point) {
   return ((p1.x - p0.x) * (point.y - p0.y) - 
@@ -304,7 +271,7 @@ class _PointInPolygonChecker {
 
   static List<Vector2> sortPointsClockwise(List<Vector2> points)
   {
-    // Находим центр полигона
+  // Находим центр полигона
     final center = points.reduce((value, element) => value + element) / points.length.toDouble();
     
     // Сортируем точки по углу относительно центра
@@ -340,16 +307,14 @@ class _RoomPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color =  isPressed 
-          ? const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
+          ? Colors.red.withOpacity(0.5)
           : Colors.blue.withOpacity(0.3) 
       ..style = PaintingStyle.fill;
 
-    final strokePaint = Paint()
-      ..color = isPressed 
-          ? const Color.fromARGB(255, 228, 125, 8)
-          : const Color.fromARGB(255, 0, 78, 141)
+    final strokePaint = Paint() // Добавляем обводку для наглядности
+      ..color = Colors.blue
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = 2;
 
     final path = Path();
     
