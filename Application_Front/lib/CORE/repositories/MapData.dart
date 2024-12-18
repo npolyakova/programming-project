@@ -13,13 +13,17 @@ class MapData
 
   final ApiClient _apiClient = ApiClient(url: DataApplication.urlService);
 
-  final Map<int, RoomData> rooms = {};
+  static final Map<int, RoomData> _rooms = {};
 
   final Map<int, NodeMap> navigationPoints = {};
   
   late Size _originalSvgSize;
 
   late double svgScale;
+
+  static Map<int, RoomData> get GetRooms => _rooms;
+
+
 
   final Map<String, dynamic> testJson = 
   {
@@ -50,6 +54,7 @@ class MapData
 
   late BoxConstraints _boxConstraints;
 
+
   Future<void> GetRoomData(Size originalSvgSize) async
   {
     _originalSvgSize = originalSvgSize;
@@ -72,7 +77,7 @@ class MapData
         for(var room in roomsList) 
         {
             int id = room['id'];
-            rooms[id] = RoomData(
+            GetRooms[id] = RoomData(
                 id: id, 
                 floor: room['floor'], 
                 parent: room['parent'] ?? -1, 

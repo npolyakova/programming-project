@@ -149,7 +149,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
       
       _timer?.cancel();
       
-      _timer = Timer(Duration(milliseconds: 1000), () {
+      _timer = Timer(Duration(milliseconds: 300), () {
         setState(() => _isPressed = false);
       });
     }
@@ -286,16 +286,16 @@ class _RoomPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color =  isPressed 
-          ? Colors.blue.withOpacity(0.3) 
+          ? Color.fromARGB(255, 104, 65, 221).withOpacity(0.3) 
           : const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
     final strokePaint = Paint() // Добавляем обводку для наглядности
       ..color = isPressed 
-          ? const Color.fromARGB(255, 0, 78, 141)
+          ? const Color.fromARGB(255, 55, 32, 126)
           : const Color.fromARGB(255, 228, 125, 8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 1.5;
 
     final path = Path();
     

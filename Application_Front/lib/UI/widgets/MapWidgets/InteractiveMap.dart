@@ -132,13 +132,16 @@ class _InteractiveMap extends State<InteractiveMap>
                       alignment: AlignmentDirectional.topStart, 
                       child: _mapImage
                     ),
-                    ..._mapData.rooms.values.map((room) {
+                    ...MapData.GetRooms.values.map((room) {
                       return room.GetRoomButton(
                         widget.onRoomTap,
                         transformOffset: calculatePosition  // Передаем функцию трансформации
                       );
                     }).toList(),
-                    PathPaiting(startPoint: 1, endPoint: 2, mapData: _mapData),
+                    PathPaiting(
+                     key: PathPaiting.globalKey,
+                     mapData: _mapData,
+                     transformOffset: calculatePosition),
                   ],
                 );
               }
