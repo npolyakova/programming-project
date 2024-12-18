@@ -67,7 +67,12 @@ def get_rooms_point(start: int, end: int):
         curs.execute(query, tuple(routes_list_id))
         routes_list = curs.fetchall()
     conn.close()
-    return routes_list
+
+    flat_route_list = []
+    for item in routes_list:
+        flat_route_list.append(item[0])
+
+    return flat_route_list
 
 # BFS для поиска кратчайшего пути
 def bfs(graph, start, end):
