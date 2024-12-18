@@ -1,4 +1,5 @@
 from collections import defaultdict, deque
+from fastapi import HTTPException
 
 import psycopg2
 
@@ -52,9 +53,11 @@ def get_rooms_point(start: int, end: int):
         curs.execute("SELECT id_route_point FROM rooms WHERE id IN (%s, %s)",(start, end))
         rooms_point_id = curs.fetchall()
     print(rooms_point_id)
-    (point_id_r1, point_id_r2) = rooms_point_id[0][0], rooms_point_id[1][0]
+    (point_id_r1, point_id_r2) = int(rooms_point_id[0][0]), int(rooms_point_id[1][0])
+    print(point_id_r1)
+    print(point_id_r2)
     graph_data = get_graph_data(conn)
-    routes_list_id =  bfs(graph_data, point_id_r1, point_id_r2)
+    routes_list_id = bfs(graph_data, point_id_r1, point_id_r2)
     with conn.cursor() as curs:
         # Создаём плейсхолдеры для каждого ID
         placeholders = ', '.join(['%s'] * len(routes_list_id))
@@ -75,14 +78,16 @@ def bfs(graph, start, end):
         path = queue.popleft()
         node = path[-1]
         if node == end:
+            print(node)
             return path
         if node not in visited:
+            print(node)
             visited.add(node)
             for neighbor in graph.get(node, []):
                 new_path = list(path)
                 new_path.append(neighbor)
                 queue.append(new_path)
-    return None
+    raise HTTPException(status_code=404, detail="Path not found")
 
 def get_graph_data(conn):
     graph = defaultdict(list)
