@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:application_front/UI/widgets/MapWidgets/PathContainer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -58,8 +59,7 @@ class _InteractiveMap extends State<InteractiveMap>
       return;
     try {
       _originalSvgSize = await getSvgSize('Resources/MainMap.svg');
-      _originalSvgSize = _originalSvgSize;
-      await _mapData.GetRoomData();
+      await _mapData.GetRoomData(_originalSvgSize);
 
       setState(() {_isDataLoaded = true;});
     } catch (e) {
@@ -91,7 +91,8 @@ class _InteractiveMap extends State<InteractiveMap>
             minScale: 0.5,
             maxScale: 100,
             child: LayoutBuilder(
-              builder: (context, constraints) {
+              builder: (context, constraints)
+              {
                 // Получаем актуальные размеры для масштабирования
                  final svgScale = _originalSvgSize.width/1280; // коэффициент масштабирования SVG/База
     
@@ -137,6 +138,7 @@ class _InteractiveMap extends State<InteractiveMap>
                         transformOffset: calculatePosition  // Передаем функцию трансформации
                       );
                     }).toList(),
+                    PathPaiting(startPoint: 1, endPoint: 2, mapData: _mapData),
                   ],
                 );
               }

@@ -90,7 +90,7 @@ class RoomData
   
   final RoomBounds bounds;
 
-
+  late Vector2 LeftTopPosition; 
 
   RoomData({required this.id, required this.floor, required this.parent, required this.name, required this.bounds});
 
@@ -106,31 +106,7 @@ class RoomData
   }
 
   bool isClickInside(double x, double y) {
-    Rect boundingBox = getBoundingBox();
-    double mapX = x + boundingBox.left;
-    double mapY = y + boundingBox.top;
-    return _PointInPolygonChecker.isPointInPolygon(bounds.bounds, mapX, mapY);
-  }
-
-  Rect getBoundingBox() {
-    if (bounds.bounds.isEmpty) return Rect.zero;
-    
-    // Находим крайние точки комнаты
-    double minX = bounds.bounds[0].x;
-    double minY = bounds.bounds[0].y;
-    double maxX = bounds.bounds[0].x;
-    double maxY = bounds.bounds[0].y;
-
-    // Проходим по всем точкам, ищем минимальные и максимальные координаты
-    for (var point in bounds.bounds) {
-      if (point.x < minX) minX = point.x;
-      if (point.y < minY) minY = point.y;
-      if (point.x > maxX) maxX = point.x;
-      if (point.y > maxY) maxY = point.y;
-    }
-
-    // Возвращаем прямоугольник, который охватывает всю комнату
-    return Rect.fromLTRB(minX, minY, maxX, maxY);
+    return _PointInPolygonChecker.isPointInPolygon(bounds.bounds, x, y);
   }
 
   Widget GetRoomButton(Function(String name, int id) OnTap, 
@@ -162,9 +138,12 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
 
   bool _isPressed = false;
   Timer? _timer;
+  late double minX, minY;
 
   void _handleTapDown(TapDownDetails details) {
-    if (widget.data.isClickInside(details.localPosition.dx, details.localPosition.dy)) {
+    final globalX = details.localPosition.dx + minX;
+    final globalY = details.localPosition.dy + minY;
+    if (widget.data.isClickInside(globalX, globalY)) {
       setState(() => _isPressed = true);
       widget.onTap(widget.data.name, widget.data.id);
       
@@ -184,8 +163,8 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
 
   @override
   Widget build(BuildContext context) {
-    double minX = double.infinity;
-    double minY = double.infinity;
+    minX = double.infinity;
+    minY = double.infinity;
     double maxX = double.negativeInfinity;
     double maxY = double.negativeInfinity;
 
@@ -242,7 +221,7 @@ class _PointInPolygonChecker {
       int crossings = 0;
       for (int i = 0; i < polygon.length; i++) {
         int j = (i + 1) % polygon.length;
-        print('Edge ${i}->${j}: (${polygon[i].x},${polygon[i].y}) -> (${polygon[j].x},${polygon[j].y})');
+       // print('Edge ${i}->${j}: (${polygon[i].x},${polygon[i].y}) -> (${polygon[j].x},${polygon[j].y})');
         // Проверка, находится ли Y-координата точки между Y-координатами вершин
         if ((polygon[i].y <= py && py < polygon[j].y) || 
             (polygon[j].y <= py && py < polygon[i].y)) {
@@ -256,12 +235,12 @@ class _PointInPolygonChecker {
           // Если точка находится левее линии - считаем пересечение
           if (px < x + EPSILON) {
             crossings++;
-            print('Crossing at x=$x (point.x=$px)');
+           // print('Crossing at x=$x (point.x=$px)');
           }
         }
       }
       
-      print('Point ($px,$py) has $crossings crossings');
+      //print('Point ($px,$py) has $crossings crossings');
       return (crossings % 2) == 0;
   }
   static double isLeft(Vector2 p0, Vector2 p1, Vector2 point) {
@@ -307,12 +286,14 @@ class _RoomPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color =  isPressed 
-          ? Colors.red.withOpacity(0.5)
-          : Colors.blue.withOpacity(0.3) 
+          ? Colors.blue.withOpacity(0.3) 
+          : const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
     final strokePaint = Paint() // Добавляем обводку для наглядности
-      ..color = Colors.blue
+      ..color = isPressed 
+          ? const Color.fromARGB(255, 0, 78, 141)
+          : const Color.fromARGB(255, 228, 125, 8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 

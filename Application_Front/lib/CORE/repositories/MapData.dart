@@ -16,8 +16,10 @@ class MapData
   final Map<int, RoomData> rooms = {};
 
   final Map<int, NodeMap> navigationPoints = {};
+  
+  late Size _originalSvgSize;
 
-  PathOfID pathID = PathOfID();
+  late double svgScale;
 
   final Map<String, dynamic> testJson = 
   {
@@ -38,8 +40,21 @@ class MapData
     ]
   };
 
-  Future<void> GetRoomData() async
+  BoxConstraints get boxConstraints => _boxConstraints;
+
+  set boxConstraints(BoxConstraints boxConstraints) {
+    if (_boxConstraints == boxConstraints) return;
+    
+    _boxConstraints = boxConstraints;
+  }
+
+  late BoxConstraints _boxConstraints;
+
+  Future<void> GetRoomData(Size originalSvgSize) async
   {
+    _originalSvgSize = originalSvgSize;
+    svgScale = _originalSvgSize.width/1280; // коэффициент масштабирования SVG/База
+    
     if(Authentication.CurrentUser == null)
     {
       throw Exception('Вы не авторизованы');
@@ -72,19 +87,37 @@ class MapData
       print('Ошибка при загрузке комнат: $e');
       throw Exception('Не удалось загрузить комнаты: $e');
     }
-  } 
-
-  List<Offset> GetPathOffset()
-  {
-    List<Offset> pathBuild = [];
-    for(int i = 0; i < pathID.path.length; i++)
-    {
-      if(navigationPoints.length < 1)
-        return pathBuild;
-      NodeMap curNode = navigationPoints[i]!;
-      pathBuild.add(Offset(curNode.x, curNode.y));
-    }
-    return pathBuild;
   }
 
+  Future<List<dynamic>> getPathData(int startPoint, int endPoint) async {
+    final path = '/route?room_start=$startPoint&room_end=$endPoint';
+    final user = Authentication.CurrentUser;
+    
+    if(user == null) {
+      throw Exception('Пользователь не авторизован');
+    }
+
+    try {
+      final response = await _apiClient.Get(path, user);
+      
+      if (response == null) 
+      {
+        throw Exception('Получен пустой ответ от сервера');
+      }
+
+      final mapResponse = response.data as Map<String, dynamic>;
+      final route = mapResponse['route'];
+      
+      if (route == null) {
+        throw Exception('Маршрут не найден в ответе сервера');
+      }
+
+      return route as List<dynamic>;
+      
+    } on FormatException catch (e) {
+      throw Exception('Ошибка парсинга ответа: ${e.message}');
+    } catch (e) {
+      throw Exception('Ошибка при получении маршрута: ${e.toString()}');
+    }
+  }
 }

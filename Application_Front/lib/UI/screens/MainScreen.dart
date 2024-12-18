@@ -15,9 +15,9 @@ class _MainScreenState extends State<MainScreen>
   String _selectedRoomName = 'Откуда';
 
   void _handleRoomTap(String roomName, int roomId) {
-    setState(() {
+    //setState(() {
     _selectedRoomName = roomName;
-    });
+    //});
   }
 
   @override
