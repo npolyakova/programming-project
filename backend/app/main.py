@@ -88,10 +88,9 @@ async def get_rooms_list(request: Request, token: str = Depends(check_access_tok
 
         rooms_list = []
         for room in rooms:
-            bounds = room[3][1:][:-1]
+            bounds = room[3][1:-1]
 
             bounds_items = list(map(int, bounds.split(",")))
-            print(bounds_items)
 
             if bounds_items and len(bounds_items) % 2 == 0:
                 bounds_pairs = [{"x": int(bounds_items[i]), "y": int(bounds_items[i + 1])} for i in
@@ -112,3 +111,8 @@ async def get_rooms_list(request: Request, token: str = Depends(check_access_tok
             "user_id": request.state.user,
             "query": query,
         }
+
+@app.get("/route")
+def get_route(room_start:int, room_end:int):
+    route = queries.get_rooms_point(room_start,room_end)
+    return {"route": route}
