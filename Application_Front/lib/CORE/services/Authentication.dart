@@ -30,11 +30,9 @@ class Authentication
       UserInfo user = UserInfo();
 
       await user.SetToken(response.data);
-
-      final response2 = await _client.Get('/protected', user);
-      user.SetUserInfo(response2.data);
       return user;
     } catch (e) {
+      //return UserInfo();
       throw Exception('Ошибка аутентификации: ${e.toString()}');
     }
   }

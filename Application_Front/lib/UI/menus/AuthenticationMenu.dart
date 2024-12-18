@@ -64,16 +64,16 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
         const SizedBox(height: _verticalSpacing),
         interactiveButton.GetButton('Войти', ClickEnterAuth, Colors.white ,'Выполняется вход...'),
         const Spacer(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Нет аккаунта? '),
-            TextButton(
-              onPressed: () {},
-              child: Text('Зарегистрируйтесь', style: TextStyle(color: bcColor, fontSize: 17)),
-            ),
-          ],
-        ),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        //     Text('Нет аккаунта? '),
+        //     TextButton(
+        //       onPressed: () {},
+        //       child: Text('Зарегистрируйтесь', style: TextStyle(color: bcColor, fontSize: 17)),
+        //     ),
+        //   ],
+        // ),
       ]);
 
     return screen;

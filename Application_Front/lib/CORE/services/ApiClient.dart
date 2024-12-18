@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:application_front/CORE/repositories/User.dart';
 import '../repositories/LoginRequest.dart';
 import 'package:dio/dio.dart';
@@ -21,10 +23,13 @@ class ApiClient {
   ));
   }
 
-  Map<String, dynamic> _GetHeaders(String? _authToken) {
+  Map<String, dynamic> _GetHeaders(String? _authToken, [bool assJson = false]) {
     final headers = <String, dynamic>{};
     if (_authToken != null) {
       headers['Authorization'] = 'Bearer $_authToken';
+    }
+    if(assJson)
+    {
       headers['Content-Type'] = 'application/json';
     }
     return headers;
@@ -51,10 +56,10 @@ class ApiClient {
     try {
       String path = '/auth';
       
-      path += "?login=${data.login}&password=${data.password}";
-
       final response = await _dio.post(
         path,
+        options: Options(headers: _GetHeaders(null, true)),
+        data: data.toJson()
       );
       return response;
     } catch (e) {

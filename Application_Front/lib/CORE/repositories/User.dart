@@ -9,7 +9,7 @@ class UserInfo
 
   Future<void> SetToken(Map<String, dynamic> json) async
   {
-    if(!await storage.containsKey(key: tokenKey))
+    if(await storage.containsKey(key: tokenKey))
     {
       return;
     }

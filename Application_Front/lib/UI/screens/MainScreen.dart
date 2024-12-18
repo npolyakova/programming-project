@@ -1,4 +1,4 @@
-import 'package:application_front/UI/widgets/InteractiveMap.dart';
+import 'package:application_front/UI/widgets/MapWidgets/InteractiveMap.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatefulWidget {
@@ -15,9 +15,9 @@ class _MainScreenState extends State<MainScreen>
   String _selectedRoomName = 'Откуда';
 
   void _handleRoomTap(String roomName, int roomId) {
-    setState(() {
+    //setState(() {
     _selectedRoomName = roomName;
-    });
+    //});
   }
 
   @override
