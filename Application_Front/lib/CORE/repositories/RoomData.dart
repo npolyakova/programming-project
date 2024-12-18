@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -12,9 +13,54 @@ class Vector2
   factory Vector2.ToJson(Map<String, dynamic> json)
   {
     return Vector2(
-      x: (json['x'] ?? 0).toDouble() / 2.5,
-      y: (json['y'] ?? 0).toDouble() / 2.5);
+      x: (json['x'] ?? 0).toDouble(),
+      y: (json['y'] ?? 0).toDouble());
   }
+  Vector2 operator +(Vector2 other) => Vector2(x: x + other.x, y: y + other.y);
+  Vector2 operator -(Vector2 other) => Vector2(x: x - other.x, y: y - other.y);
+  Vector2 operator *(double scalar) => Vector2(x: x * scalar, y: y * scalar);
+  Vector2 operator /(double scalar) => Vector2(x: x / scalar, y: y / scalar);
+
+  double dot(Vector2 other) => x * other.x + y * other.y;
+  double cross(Vector2 other) => x * other.y - y * other.x;
+
+  double get magnitude => sqrt(x * x + y * y);
+  double get sqrMagnitude => x * x + y * y;
+  
+  Vector2 get normalized {
+    double mag = magnitude;
+    return mag > 0 ? this / mag : Vector2(x: 0, y: 0);
+  }
+
+  double distanceTo(Vector2 other) {
+    final dx = x - other.x;
+    final dy = y - other.y;
+    return sqrt(dx * dx + dy * dy);
+  }
+
+  double angleTo(Vector2 other) {
+    return atan2(cross(other), dot(other));
+  }
+
+  Vector2 lerp(Vector2 other, double t) {
+    return Vector2(
+      x: x + (other.x - x) * t,
+      y: y + (other.y - y) * t
+    );
+  }
+
+  @override
+  String toString() => 'Vector2(x: $x, y: $y)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Vector2 && other.x == x && other.y == y;
+  }
+
+  @override
+  int get hashCode => x.hashCode ^ y.hashCode;
+
 }
 
 class RoomBounds {
@@ -43,6 +89,8 @@ class RoomData
   final String name;
   
   final RoomBounds bounds;
+
+
 
   RoomData({required this.id, required this.floor, required this.parent, required this.name, required this.bounds});
 
@@ -85,36 +133,78 @@ class RoomData
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
 
-  Widget GetRoomButton(Function(String name, int id) OnTap)
+  Widget GetRoomButton(Function(String name, int id) OnTap, 
+    {Function(Offset)? transformOffset})
   {
-      return _ClickableRoomBounds(data: this, onTap: OnTap);
+     if (bounds.bounds.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return _ClickableRoomBounds(data: this, onTap: OnTap, transformOffset: transformOffset ?? ((offset) => offset),);
   }
 }
 
 
-class _ClickableRoomBounds extends StatelessWidget {
+class _ClickableRoomBounds extends StatefulWidget {
   final RoomData data;
   final Function(String name, int id) onTap;
+  final Function(Offset p1) transformOffset;
 
   _ClickableRoomBounds({
     required this.data,
-    required this.onTap,
+    required this.onTap, required this.transformOffset,
   });
 
   @override
+  _ClickableRoomBoundsState createState() => _ClickableRoomBoundsState();
+}
+
+class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
+
+  bool _isPressed = false;
+  Timer? _timer;
+
+  void _handleTapDown(TapDownDetails details) {
+    if (widget.data.isClickInside(details.localPosition.dx, details.localPosition.dy)) {
+      setState(() => _isPressed = true);
+      widget.onTap(widget.data.name, widget.data.id);
+      
+      _timer?.cancel();
+      
+      _timer = Timer(Duration(milliseconds: 1000), () {
+        setState(() => _isPressed = false);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Очищаем таймер при уничтожении виджета
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Находим размеры области
     double minX = double.infinity;
     double minY = double.infinity;
     double maxX = double.negativeInfinity;
     double maxY = double.negativeInfinity;
 
-    for (var point in data.bounds.bounds) {
-      minX = min(minX, point.x);
-      minY = min(minY, point.y);
-      maxX = max(maxX, point.x);
-      maxY = max(maxY, point.y);
-    }
+    for (var point in widget.data.bounds.bounds) {
+        var transformedPoint = widget.transformOffset(Offset(point.x, point.y));
+        minX = min(minX, transformedPoint.dx);
+        minY = min(minY, transformedPoint.dy);
+        maxX = max(maxX, transformedPoint.dx);
+        maxY = max(maxY, transformedPoint.dy);
+      }
+
+    final newBounds = widget.data.bounds.bounds.map((bound) {
+                    return Vector2(
+                        x: widget.transformOffset(Offset(bound.x, bound.y)).dx,
+                        y: widget.transformOffset(Offset(bound.x, bound.y)).dy
+                    );
+                }).toList();
+    
+    final newRoomBounds = RoomBounds(id: widget.data.bounds.id, bounds: newBounds);
 
     return Positioned(
       left: minX,
@@ -123,42 +213,75 @@ class _ClickableRoomBounds extends StatelessWidget {
       height: maxY - minY,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
-         onTapDown: (details) {
-        if (data.isClickInside(details.localPosition.dx, details.localPosition.dy)) {
-            onTap(data.name, data.id);
-          }
-        },
+        onTapDown: _handleTapDown,
         child: CustomPaint(
-          painter: _RoomPainter(bounds: data.bounds, offset: Offset(-minX, -minY)),
+          painter: _RoomPainter(
+            bounds: newRoomBounds,
+            offset: Offset(-minX, -minY),
+            isPressed: _isPressed,
+          ),
         ),
       ),
     );
   }
 }
 
+
 class _PointInPolygonChecker {
+  static get math => null;
+
   /// Проверяет, находится ли точка внутри полигона
-   static bool isPointInPolygon(List<Vector2> polygon, double px, double py) {
+  static bool isPointInPolygon(List<Vector2> polygon, double px, double py) {
     if (polygon.length < 3) return false;
-    
-    bool collision = false;
-    
-    // Проходим по всем сторонам многоугольника
-    for (int current = 0; current < polygon.length; current++) {
-      int next = (current + 1) % polygon.length;
+
+      px = (px * 10).round() / 100;
+      py = (py * 10).round() / 100;
       
-      Vector2 vc = polygon[current]; // Текущая вершина
-      Vector2 vn = polygon[next];    // Следующая вершина
+      const double EPSILON = 0.1; 
       
-      // Проверяем, пересекает ли луч эту сторону
-      if (((vc.y > py && vn.y < py) || (vc.y < py && vn.y > py)) &&
-          (px < (vn.x - vc.x) * (py - vc.y) / (vn.y - vc.y) + vc.x)) {
-            collision = !collision;
+      int crossings = 0;
+      for (int i = 0; i < polygon.length; i++) {
+        int j = (i + 1) % polygon.length;
+        print('Edge ${i}->${j}: (${polygon[i].x},${polygon[i].y}) -> (${polygon[j].x},${polygon[j].y})');
+        // Проверка, находится ли Y-координата точки между Y-координатами вершин
+        if ((polygon[i].y <= py && py < polygon[j].y) || 
+            (polygon[j].y <= py && py < polygon[i].y)) {
+          
+          // Вычисляем X-координату пересечения
+          double x = polygon[i].x + 
+                    (py - polygon[i].y) * 
+                    (polygon[j].x - polygon[i].x) / 
+                    (polygon[j].y - polygon[i].y);
+                    
+          // Если точка находится левее линии - считаем пересечение
+          if (px < x + EPSILON) {
+            crossings++;
+            print('Crossing at x=$x (point.x=$px)');
+          }
+        }
       }
-    }
-    
-    return collision;
+      
+      print('Point ($px,$py) has $crossings crossings');
+      return (crossings % 2) == 0;
   }
+  static double isLeft(Vector2 p0, Vector2 p1, Vector2 point) {
+  return ((p1.x - p0.x) * (point.y - p0.y) - 
+          (point.x - p0.x) * (p1.y - p0.y));
+  }
+
+  static List<Vector2> sortPointsClockwise(List<Vector2> points)
+  {
+  // Находим центр полигона
+    final center = points.reduce((value, element) => value + element) / points.length.toDouble();
+    
+    // Сортируем точки по углу относительно центра
+    return List<Vector2>.from(points)
+      ..sort((a, b) {
+        final angleA = atan2(a.y - center.y, a.x - center.x);
+        final angleB = atan2(b.y - center.y, b.x - center.x);
+        return angleA.compareTo(angleB);
+      }); 
+    }
 
   // Добавим метод для отладки
   static void debugPrint(List<Vector2> polygon, double px, double py) {
@@ -166,20 +289,26 @@ class _PointInPolygonChecker {
     for (var point in polygon) {
       print('Polygon point: (${point.x}, ${point.y})');
     }
-    print('Result: ${isPointInPolygon(polygon, px, py)}');
+    //print('Result: ${isPointInPolygon(polygon, px, py)}');
   }
 }
 
 class _RoomPainter extends CustomPainter {
   final RoomBounds bounds;
   final Offset offset; // Смещение для корректного отображения
+  final bool isPressed;
 
-  _RoomPainter({required this.bounds, required this.offset});
+  _RoomPainter({
+    required this.bounds, 
+    required this.offset,
+    required this.isPressed,});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.blue.withOpacity(0.3)
+      ..color =  isPressed 
+          ? Colors.red.withOpacity(0.5)
+          : Colors.blue.withOpacity(0.3) 
       ..style = PaintingStyle.fill;
 
     final strokePaint = Paint() // Добавляем обводку для наглядности
@@ -213,5 +342,6 @@ class _RoomPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _RoomPainter oldDelegate) => 
+      isPressed != oldDelegate.isPressed; 
 }

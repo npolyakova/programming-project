@@ -1,11 +1,13 @@
 class PathOfID
 {
-   final List<int> path;
+  PathOfID();
 
-  PathOfID({required this.path});
+  List<int> path = [];
 
   factory PathOfID.ToJson(Map<String, dynamic> json)
   {
-    return PathOfID(path: json['path'] as List<int>);
+    final newPath = PathOfID();
+    newPath.path = json['path'] as List<int>;
+    return newPath  ;
   }
 }

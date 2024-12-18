@@ -1,4 +1,4 @@
-import 'package:application_front/UI/widgets/InteractiveMap.dart';
+import 'package:application_front/UI/widgets/MapWidgets/InteractiveMap.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatefulWidget {
