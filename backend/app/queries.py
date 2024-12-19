@@ -69,44 +69,21 @@ def get_rooms_point(start: int, end: int):
 
 # BFS для поиска кратчайшего пути
 def bfs(graph, start, end):
-    # queue = deque()
-    # visited = [start]
+    queue = deque([[start]])
+    visited = set()
 
-    # queue = deque([[start]])
-    # print(queue)
-    # visited = set()
-    #
-    # while queue:
-    #     path = queue.popleft()
-    #     node = path[-1]
-    #     print(node)
-    #     if node == end:
-    #         print(node + 'end')
-    #         return path
-    #     if node not in visited:
-    #         print(node)
-    #         visited.add(node)
-    #         for neighbor in graph.get(node, []):
-    #             new_path = list(path)
-    #             new_path.append(neighbor)
-    #             queue.append(new_path)
-    queue = deque()
-    visited = []
-    path = [start]
-
-    while path:
+    while queue:
+        path = queue.popleft()
         node = path[-1]
         if node == end:
             return path
+        if node not in visited:
+            visited.add(node)
+            for neighbor in graph.get(node, []):
+                new_path = list(path)
+                new_path.append(neighbor)
+                queue.append(new_path)
 
-        for neighbor in graph.get(node, []):
-            if neighbor not in visited:
-                path.append(neighbor)
-                visited.append(neighbor)
-                queue.append([*path])
-                break
-        else:
-            path.pop()
     raise HTTPException(status_code=404, detail="Path not found")
 # // 1 point get again
 # "{272,242}" first
