@@ -52,48 +52,64 @@ def get_rooms_point(start: int, end: int):
     with conn.cursor() as curs:
         curs.execute("SELECT id_route_point FROM rooms WHERE id IN (%s, %s)",(start, end))
         rooms_point_id = curs.fetchall()
-    print(rooms_point_id)
     (point_id_r1, point_id_r2) = int(rooms_point_id[0][0]), int(rooms_point_id[1][0])
-    print(point_id_r1)
-    print(point_id_r2)
     graph_data = get_graph_data(conn)
     routes_list_id = bfs(graph_data, point_id_r1, point_id_r2)
+    routes_list = []
+    print(routes_list_id)
     with conn.cursor() as curs:
-        # Создаём плейсхолдеры для каждого ID
-        placeholders = ', '.join(['%s'] * len(routes_list_id))
-        query = f"SELECT points FROM route_points WHERE id IN ({placeholders})"
-
-        # Выполняем запрос с распакованным списком
-        curs.execute(query, tuple(routes_list_id))
-        routes_list = curs.fetchall()
+        for item in routes_list_id:
+            query = f"SELECT points FROM route_points WHERE id =({item})"
+            # Выполняем запрос с распакованным списком
+            curs.execute(query, item)
+            routes_list.append(curs.fetchall()[0][0])
     conn.close()
 
-    flat_route_list = []
-    for item in routes_list:
-        flat_route_list.append(item[0])
-
-    return flat_route_list
+    return routes_list
 
 # BFS для поиска кратчайшего пути
 def bfs(graph, start, end):
-    queue = deque([[start]])
-    visited = set()
+    # queue = deque()
+    # visited = [start]
 
-    while queue:
-        path = queue.popleft()
+    # queue = deque([[start]])
+    # print(queue)
+    # visited = set()
+    #
+    # while queue:
+    #     path = queue.popleft()
+    #     node = path[-1]
+    #     print(node)
+    #     if node == end:
+    #         print(node + 'end')
+    #         return path
+    #     if node not in visited:
+    #         print(node)
+    #         visited.add(node)
+    #         for neighbor in graph.get(node, []):
+    #             new_path = list(path)
+    #             new_path.append(neighbor)
+    #             queue.append(new_path)
+    queue = deque()
+    visited = []
+    path = [start]
+
+    while path:
         node = path[-1]
         if node == end:
-            print(node)
             return path
-        if node not in visited:
-            print(node)
-            visited.add(node)
-            for neighbor in graph.get(node, []):
-                new_path = list(path)
-                new_path.append(neighbor)
-                queue.append(new_path)
-    raise HTTPException(status_code=404, detail="Path not found")
 
+        for neighbor in graph.get(node, []):
+            if neighbor not in visited:
+                path.append(neighbor)
+                visited.append(neighbor)
+                queue.append([*path])
+                break
+        else:
+            path.pop()
+    raise HTTPException(status_code=404, detail="Path not found")
+# // 1 point get again
+# "{272,242}" first
 def get_graph_data(conn):
     graph = defaultdict(list)
     with conn.cursor() as curs:
