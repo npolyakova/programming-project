@@ -1,17 +1,15 @@
 import 'package:application_front/CORE/repositories/DataApplication.dart';
 import 'package:application_front/CORE/repositories/NodeMap.dart';
-import 'package:application_front/CORE/repositories/PathOfID.dart';
 import 'package:application_front/CORE/repositories/RoomData.dart';
 import 'package:application_front/CORE/services/ApiClient.dart';
 import 'package:application_front/CORE/services/Authentication.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 class MapData
 {
   static const String room_id = 'id', floor = 'floor', parent = 'parent', bounds = 'bounds', name = 'name';
 
-  final ApiClient _apiClient = ApiClient(url: DataApplication.urlService);
+  static final ApiClient _apiClient = ApiClient(url: DataApplication.urlService);
 
   static final Map<int, RoomData> _rooms = {};
 
@@ -22,8 +20,6 @@ class MapData
   late double svgScale;
 
   static Map<int, RoomData> get GetRooms => _rooms;
-
-
 
   final Map<String, dynamic> testJson = 
   {
@@ -54,16 +50,35 @@ class MapData
 
   late BoxConstraints _boxConstraints;
 
+  static Future<List<RoomData>> FindRoom(String findName) async
+  {
+    Authentication.CheckAuth();
+
+    try
+    {
+      final response = await _apiClient.Get('/rooms?query=$findName', Authentication.CurrentUser!);
+
+      return (response.data['rooms'] as List<dynamic>)
+      .map((room) => ParseRoomDataAtMap(room as Map<String, dynamic>))
+      .toList();
+
+    }
+    catch(e)
+    {
+      print('Ошибка при поиске комнат: $e');
+      throw Exception('Не удалось загрузить комнаты с именем $findName: $e');
+    }
+
+  }
+
 
   Future<void> GetRoomData(Size originalSvgSize) async
   {
     _originalSvgSize = originalSvgSize;
     svgScale = _originalSvgSize.width/1280; // коэффициент масштабирования SVG/База
     
-    if(Authentication.CurrentUser == null)
-    {
-      throw Exception('Вы не авторизованы');
-    }
+    Authentication.CheckAuth();
+
     try
     {
         final response = await _apiClient.Get('/rooms', Authentication.CurrentUser!);
@@ -76,15 +91,8 @@ class MapData
         final roomsList =  response.data['rooms'] as List<dynamic>; //testJson['rooms'] as List<dynamic>;
         for(var room in roomsList) 
         {
-            int id = room['id'];
-            GetRooms[id] = RoomData(
-                id: id, 
-                floor: room['floor'], 
-                parent: room['parent'] ?? -1, 
-                name: room['name'],
-                bounds: RoomBounds.Create(id, room['bounds']
-                )
-            );
+            RoomData roomData = ParseRoomDataAtMap(room);
+            _rooms[roomData.id] = roomData;
         }
     }
     catch(e)
@@ -92,6 +100,19 @@ class MapData
       print('Ошибка при загрузке комнат: $e');
       throw Exception('Не удалось загрузить комнаты: $e');
     }
+  }
+
+  static RoomData ParseRoomDataAtMap(Map<String,dynamic> room)
+  {
+    int id = room['id'];
+    return RoomData(
+                id: id, 
+                floor: room['floor'], 
+                parent: room['parent'] ?? -1, 
+                name: room['name'],
+                bounds: RoomBounds.Create(id, room['bounds']
+                )
+            );
   }
 
   Future<List<dynamic>> getPathData(int startPoint, int endPoint) async {
@@ -105,7 +126,7 @@ class MapData
     try {
       final response = await _apiClient.Get(path, user);
       
-      if (response == null) 
+      if (response.data == null) 
       {
         throw Exception('Получен пустой ответ от сервера');
       }

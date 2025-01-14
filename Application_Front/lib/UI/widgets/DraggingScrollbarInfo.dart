@@ -1,4 +1,5 @@
 import 'package:application_front/CORE/repositories/RoomData.dart';
+import 'package:application_front/UI/widgets/SearchHelperWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:application_front/UI/widgets/MapWidgets/PathContainer.dart';
 
@@ -70,49 +71,55 @@ class RouteSheetState extends State<RouteSheet> {
   Widget _buildRouteSelectionMode() {
     return Column(
       children: [
-        Container(
-          height: 40,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              const Icon(Icons.location_on_outlined, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                _fromRoom?.name ?? 'Откуда',
-                style: TextStyle(
-                  color: _fromRoom == null ? Colors.grey : Colors.black,
-                ),
+          InkWell(
+          onTap: () => _showSearchHelper(context, setFromRoom),
+          child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 40,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              const Icon(Icons.location_on, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                _toRoom?.name ?? 'Куда',
-                style: TextStyle(
-                  color: _toRoom == null ? Colors.grey : Colors.black,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    _fromRoom?.name ?? 'Откуда',
+                    style: TextStyle(
+                      color: _fromRoom == null ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        _buildBuildRouteButton(),
+          const SizedBox(height: 8),
+          InkWell(
+          onTap: () => _showSearchHelper(context, setToRoom),
+          child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    _toRoom?.name ?? 'Куда',
+                    style: TextStyle(
+                      color: _toRoom == null ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildBuildRouteButton(),
       ],
     );
   }
@@ -180,6 +187,26 @@ class RouteSheetState extends State<RouteSheet> {
       ),
     );
   }
+
+Future<void> _showSearchHelper(BuildContext context, Function(RoomData) setRoomData) async {
+  final result = await showModalBottomSheet<RoomData>(
+    context: context,
+    isScrollControlled: true, 
+    builder: (BuildContext context) {
+      return SearchHelperWidget(
+        onRoomSelected: (RoomData room) {
+          Navigator.pop(context, room);
+        },
+      );
+    },
+  );
+  
+  if (result != null)
+  {
+    setRoomData(result);
+  }
+}
+
  void _buildRoute() {
     if (_fromRoom != null && _toRoom != null) {
       PathPaiting.globalKey.currentState?.updatePath(

@@ -43,6 +43,12 @@ class Authentication
     _currentUser = null;
   }
 
-  
+  static void CheckAuth()
+  {
+    if(Authentication.CurrentUser == null)
+    {
+      throw Exception('Вы не авторизованы');
+    }
+  }
 
 }
