@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:test/test.dart';
 
 import 'package:flutter/material.dart';
 
@@ -140,10 +141,32 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
   Timer? _timer;
   late double minX, minY;
 
+  late List<Vector2> boundsClick;
+
   void _handleTapDown(TapDownDetails details) {
+    
     final globalX = details.localPosition.dx + minX;
     final globalY = details.localPosition.dy + minY;
-    if (widget.data.isClickInside(globalX, globalY)) {
+
+    print("PointClick = X: $globalX  Y: $globalY  Tap GLOBAL");
+
+    print(_PointInPolygonChecker.isPointInPolygon(boundsClick, globalX, globalY));
+    print(widget.data.isClickInside(globalX, globalY));
+
+
+    final lockalX = details.localPosition.dx;
+    final lockalY = details.localPosition.dy;
+
+    print("PointClick = X: $lockalX  Y: $lockalY  Tap lockal");
+
+    print(_PointInPolygonChecker.isPointInPolygon(boundsClick, lockalX, lockalY));
+    print(widget.data.isClickInside(lockalX, lockalY));
+
+    print(_PointInPolygonChecker.isPointInPolygon(boundsClick, lockalX, lockalY));
+
+    print(boundsClick);
+
+    if (_PointInPolygonChecker.isPointInPolygon(boundsClick, lockalX, lockalY)) {
       setState(() => _isPressed = true);
       widget.onTap(widget.data.name, widget.data.id);
       
@@ -176,14 +199,14 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
         maxY = max(maxY, transformedPoint.dy);
       }
 
-    final newBounds = widget.data.bounds.bounds.map((bound) {
+    boundsClick = widget.data.bounds.bounds.map((bound) {
                     return Vector2(
                         x: widget.transformOffset(Offset(bound.x, bound.y)).dx,
                         y: widget.transformOffset(Offset(bound.x, bound.y)).dy
                     );
                 }).toList();
     
-    final newRoomBounds = RoomBounds(id: widget.data.bounds.id, bounds: newBounds);
+    final newRoomBounds = RoomBounds(id: widget.data.bounds.id, bounds: boundsClick);
 
     return Positioned(
       left: minX,
