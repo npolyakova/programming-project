@@ -23,10 +23,10 @@ class ApiClient {
   ));
   }
 
-  Map<String, dynamic> _GetHeaders(String? _authToken, [bool assJson = false]) {
+  Map<String, dynamic> _GetHeaders(String? authToken, [bool assJson = false]) {
     final headers = <String, dynamic>{};
-    if (_authToken != null) {
-      headers['Authorization'] = 'Bearer $_authToken';
+    if (authToken != null) {
+      headers['Authorization'] = 'Bearer $authToken';
     }
     if(assJson)
     {
@@ -46,7 +46,7 @@ class ApiClient {
           options: Options(headers: _GetHeaders(token)),
         );
       });
-      return response!;
+      return response;
     } catch (e) {
       throw _handleError(e);
     }

@@ -12,7 +12,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen>
 {
-  DraggableScrollableController _dragController = DraggableScrollableController();
+  final DraggableScrollableController _dragController = DraggableScrollableController();
 
   late InteractiveMap interactiveMap;
 

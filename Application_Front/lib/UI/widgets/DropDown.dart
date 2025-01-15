@@ -18,7 +18,7 @@ Widget buildRouteSelector({
   required List<RoutePoint> points,
   required Function(RoutePoint?) onSelected,
 }) {
-  return Container(
+  return SizedBox(
     height: 40,
     child: DropdownButtonHideUnderline(
       child: DropdownButton<RoutePoint>(

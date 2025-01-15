@@ -126,7 +126,7 @@ class _ClickableRoomBounds extends StatefulWidget {
   final Function(String name, int id) onTap;
   final Function(Offset p1) transformOffset;
 
-  _ClickableRoomBounds({
+  const _ClickableRoomBounds({
     required this.data,
     required this.onTap, required this.transformOffset,
   });
@@ -172,7 +172,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
       
       _timer?.cancel();
       
-      _timer = Timer(Duration(milliseconds: 300), () {
+      _timer = Timer(const Duration(milliseconds: 300), () {
         setState(() => _isPressed = false);
       });
     }
@@ -309,7 +309,7 @@ class _RoomPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color =  isPressed 
-          ? Color.fromARGB(255, 104, 65, 221).withOpacity(0.3) 
+          ? const Color.fromARGB(255, 104, 65, 221).withOpacity(0.3) 
           : const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
       ..style = PaintingStyle.fill;
 

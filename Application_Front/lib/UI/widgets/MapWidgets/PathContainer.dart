@@ -63,6 +63,15 @@ class _PathContentState extends State<PathPaiting> {
     }
   }
 
+  void clearPath()
+  {
+    setState(() {
+      fromRoomId = null;
+      toRoomId = null;
+      _isDataEmpty = true;
+    });
+  }
+
   // Метод для обновления пути
   Future<void> updatePath(int from, int to) async {
     _isDataEmpty = false;
@@ -95,7 +104,7 @@ class _PathContentState extends State<PathPaiting> {
     {
       return const SizedBox.shrink();
     }
-    if (_isDataLoaded == false || route.length < 1)
+    if (_isDataLoaded == false || route.isEmpty)
     {
       return const Center(child: CircularProgressIndicator());
     }
@@ -141,9 +150,10 @@ class _PathPainter extends CustomPainter {
     List<Offset> pathBuild = [];
     for(int i = 0; i < path.length; i++)
     {
-      if(path.length < 1)
+      if(path.isEmpty) {
         return pathBuild;
-      Vector2 curPoint = path[i]!;
+      }
+      Vector2 curPoint = path[i];
       pathBuild.add(transforns(Offset(curPoint.x, curPoint.y)));
     }
     return pathBuild;
