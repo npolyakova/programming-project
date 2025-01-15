@@ -8,12 +8,13 @@ class LoginRequest
   final String password;
   LoginRequest({required this.login, required this.password});
 
-  factory LoginRequest.Create(String _login, String PassWord)
+  factory LoginRequest.Create(String login, String PassWord)
   {
-    return LoginRequest(login: _login, password: _GetSha256(PassWord));
+    return LoginRequest(login: login, password: _GetSha256(PassWord));
   }
 
   Map<String,dynamic> toJson() =>
+  
   {
     'login': login,
     'password': password

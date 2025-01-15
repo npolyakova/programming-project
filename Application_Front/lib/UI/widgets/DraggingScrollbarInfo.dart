@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:application_front/UI/widgets/MapWidgets/PathContainer.dart';
 
 enum RouteSheetDisplayMode {
-  routeSelection,  // Режим с полями "Откуда"/"Куда"
+  routeButtonStart,  // Режим с полями "Откуда"/"Куда"
+  routeSelection, // Режим отображения маршрута и информации о нем
   roomSelection    // Режим с кнопками "Отсюда"/"Сюда"
 }
 
@@ -20,7 +21,7 @@ class RouteSheet extends StatefulWidget {
     super.key, 
     required this.dragController,
     this.onRouteChanged,
-    this.initialMode = RouteSheetDisplayMode.routeSelection,
+    this.initialMode = RouteSheetDisplayMode.routeButtonStart,
   });
 
   static final GlobalKey<RouteSheetState> globalKey = GlobalKey<RouteSheetState>();
@@ -68,7 +69,44 @@ class RouteSheetState extends State<RouteSheet> {
     });
   }
 
-  Widget _buildRouteSelectionMode() {
+  Widget _buildTargetWidget(RouteSheetDisplayMode mode)
+  {
+    switch(mode)
+    {
+      case RouteSheetDisplayMode.roomSelection:
+        return _buildRoomSelectionMode();
+      case RouteSheetDisplayMode.routeButtonStart:
+        return _buildrouMode();
+        case RouteSheetDisplayMode.routeSelection:
+        return _buildRouteInfo();
+    }
+  }
+
+  Widget _buildRouteInfo()
+  {
+      return  Row(
+          children: [
+            const Text('Информация',style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  PathPaiting.globalKey.currentState?.clearPath();
+                  _toRoom = null;
+                  setFromRoom(null);
+                  updateDisplayMode(RouteSheetDisplayMode.routeButtonStart);
+                },
+                style:  ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 55, 32, 126)
+                ),
+                child: const Text('Сбросить маршрут',style: TextStyle(color: Colors.white),),
+              ),
+            ),
+          ],
+        );
+    }
+
+  Widget _buildrouMode() {
     return Column(
       children: [
           InkWell(
@@ -140,12 +178,12 @@ class RouteSheetState extends State<RouteSheet> {
               child: ElevatedButton(
                 onPressed: () {
                   setFromRoom(_currentRoom);
-                  updateDisplayMode(RouteSheetDisplayMode.routeSelection);
+                  updateDisplayMode(RouteSheetDisplayMode.routeButtonStart);
                 },
-                child: const Text('Отсюда',style: TextStyle(color: Colors.white)),
                 style:  ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(255, 55, 32, 126)
+                  backgroundColor: const Color.fromARGB(255, 55, 32, 126)
                 ),
+                child: const Text('Отсюда',style: TextStyle(color: Colors.white)),
               ),
             ),
             const SizedBox(width: 16),
@@ -153,12 +191,12 @@ class RouteSheetState extends State<RouteSheet> {
               child: ElevatedButton(
                 onPressed: () {
                   setToRoom(_currentRoom);
-                  updateDisplayMode(RouteSheetDisplayMode.routeSelection);
+                  updateDisplayMode(RouteSheetDisplayMode.routeButtonStart);
                 },
-                child: const Text('Сюда',style: TextStyle(color: Colors.white),),
                 style:  ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(255, 55, 32, 126)
+                  backgroundColor: const Color.fromARGB(255, 55, 32, 126)
                 ),
+                child: const Text('Сюда',style: TextStyle(color: Colors.white),),
               ),
             ),
           ],
@@ -175,7 +213,7 @@ class RouteSheetState extends State<RouteSheet> {
         onPressed: canBuildRoute ? _buildRoute : null,
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 50),
-          backgroundColor: canBuildRoute ? Color.fromARGB(255, 55, 32, 126) : Color.fromARGB(255, 113, 103, 146),
+          backgroundColor: canBuildRoute ? const Color.fromARGB(255, 55, 32, 126) : const Color.fromARGB(255, 113, 103, 146),
         ),
         child: const Text(
           'Построить маршрут',
@@ -213,22 +251,24 @@ Future<void> _showSearchHelper(BuildContext context, Function(RoomData) setRoomD
         _fromRoom!.id,
         _toRoom!.id,
       );
+      updateDisplayMode(RouteSheetDisplayMode.routeSelection);
       widget.onRouteChanged?.call(_fromRoom, _toRoom);
     }
   }
   @override
   Widget build(BuildContext context) {
     var selectedRoomName = "";
-    if(_currentRoom != null)
+    if(_currentRoom != null) {
       selectedRoomName = _currentRoom!.name;
+    }
     return DraggableScrollableSheet(
       controller: widget.dragController,
-      initialChildSize: 0.35,
+      initialChildSize: _displayMode == RouteSheetDisplayMode.routeSelection ? 0.15 : 0.35,
       minChildSize: 0.04,
       maxChildSize: 0.9,
       snapAnimationDuration: const Duration(milliseconds: 300),
       snap: true,
-      snapSizes: const [0.04, 0.35, 0.9],
+      snapSizes: const [0.04, 0.15, 0.35, 0.9],
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
@@ -265,9 +305,7 @@ Future<void> _showSearchHelper(BuildContext context, Function(RoomData) setRoomD
               const SizedBox(height: 8),
               
               // Выбор режима отображения
-              _displayMode == RouteSheetDisplayMode.routeSelection
-                  ? _buildRouteSelectionMode()
-                  : _buildRoomSelectionMode(),
+              _buildTargetWidget(_displayMode)
 
               // Остальные виджеты (информация о маршруте)
             

@@ -7,8 +7,7 @@ import 'package:flutter/material.dart';
 class SearchHelperWidget extends StatefulWidget {
   final Function(RoomData) onRoomSelected;
   
-  const SearchHelperWidget({Key? key, required this.onRoomSelected}) 
-    : super(key: key);
+  const SearchHelperWidget({super.key, required this.onRoomSelected});
 
   @override
   _SearchHelperWidgetState createState() => _SearchHelperWidgetState();
@@ -20,10 +19,12 @@ class _SearchHelperWidgetState extends State<SearchHelperWidget> {
   bool _isLoading = false;
   
   void _onSearchChanged(String query) {
+    setState(() => _isLoading = true);
+    _rooms = [];
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
     
-    _debounceTimer = Timer(const Duration(seconds: 3), () async {
-      setState(() => _isLoading = true);
+    _debounceTimer = Timer(const Duration(seconds: 1), () async 
+    {
       try {
         final rooms = await MapData.FindRoom(query);
         setState(() {
@@ -49,13 +50,16 @@ class _SearchHelperWidgetState extends State<SearchHelperWidget> {
             children: [
               TextField(
                 onChanged: _onSearchChanged,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Введите название помещения...',
                   prefixIcon: Icon(Icons.search),
                 ),
               ),
-              if (_isLoading)
-                CircularProgressIndicator()
+
+              if (_isLoading) ...[
+                const SizedBox(height: 20.0),
+                const CircularProgressIndicator()
+              ]
               else
                 Expanded(
                   child: ListView.builder(
