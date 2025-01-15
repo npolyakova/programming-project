@@ -14,11 +14,11 @@ async def check_access_token(
 ) -> str:
     # Проверяем, что токен передан
     if authorization_header is None:
-        raise HTTPException()
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     # Проверяем токен на соответствие форме
     if 'Bearer ' not in authorization_header:
-        raise HTTPException()
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     # Убираем лишнее из токена
     clear_token = authorization_header.replace('Bearer ', '')

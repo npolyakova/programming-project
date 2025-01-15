@@ -85,8 +85,7 @@ def bfs(graph, start, end):
                 queue.append(new_path)
 
     raise HTTPException(status_code=404, detail="Path not found")
-# // 1 point get again
-# "{272,242}" first
+
 def get_graph_data(conn):
     graph = defaultdict(list)
     with conn.cursor() as curs:
