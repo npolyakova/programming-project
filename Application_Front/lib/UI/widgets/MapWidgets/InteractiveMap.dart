@@ -48,7 +48,7 @@ class _InteractiveMap extends State<InteractiveMap>
     _mapImage = SvgPicture.asset(
       'Resources/MainMap.svg',
       fit: BoxFit.contain,
-      allowDrawingOutsideViewBox: true,
+      allowDrawingOutsideViewBox: false,
     );
 
     super.initState();
