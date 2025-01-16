@@ -40,7 +40,7 @@ def get_rooms_sql_query(query: str):
     with conn.cursor() as curs:
         # Выполняем запрос на основе наличия параметра query
         if query:
-            curs.execute("SELECT name, floor, id, map_points FROM rooms WHERE name LIKE %s", (query,))
+            curs.execute("SELECT name, floor, id, map_points FROM rooms WHERE name ILIKE %s", (query,))
         else:
             curs.execute("SELECT name, floor, id, map_points FROM rooms")
         rooms = curs.fetchall()
