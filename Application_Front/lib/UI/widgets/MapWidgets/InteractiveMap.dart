@@ -21,7 +21,6 @@ class InteractiveMap extends StatefulWidget
   {
     return _InteractiveMap();
   }
-  
 }
 
 class _InteractiveMap extends State<InteractiveMap>
@@ -129,9 +128,9 @@ class _InteractiveMap extends State<InteractiveMap>
 
                 return Stack(
                   children: [
-                    Align(
+                    const Align(
                       alignment: AlignmentDirectional.topStart, 
-                      child: _mapImage
+                      //child: _mapImage
                     ),
                     ...MapData.GetRooms.values.map((room) {
                       return room.GetRoomButton(
