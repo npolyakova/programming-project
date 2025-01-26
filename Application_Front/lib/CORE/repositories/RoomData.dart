@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:application_front/UI/widgets/MapWidgets/RoomOrderWidget.dart';
 import 'package:test/test.dart';
 
 import 'package:flutter/material.dart';
@@ -141,6 +142,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
   Timer? _timer;
   late double minX, minY;
 
+
   late List<Vector2> boundsClick;
 
   void _handleTapDown(PointerDownEvent details) {
@@ -149,13 +151,20 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
     final globalY = details.localPosition.dy + minY;
 
     if (_PointInPolygonChecker.isPointInPolygon(boundsClick, globalX, globalY)) {
-      setState(() => _isPressed = true);
+      setState(()
+      {
+        _isPressed = true;
+      });
       widget.onTap(widget.data.name, widget.data.id);
       
       _timer?.cancel();
       
       _timer = Timer(const Duration(milliseconds: 300), () {
-        setState(() => _isPressed = false);
+        setState(()
+        {
+          _isPressed = false;
+          RoomOrderPaiting.globalKey.currentState?.updateRoom(_isPressed, null, null);
+        });
       });
     }
   }
@@ -197,18 +206,18 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
       width: maxX - minX,
       height: maxY - minY,
       child: Listener(
-        behavior: HitTestBehavior.translucent,
-        onPointerDown: (event) {
-          _handleTapDown(event);
-        },
-        child: CustomPaint(
-          painter: _RoomPainter(
-            bounds: newRoomBounds,
-            offset: Offset(-minX, -minY),
-            isPressed: _isPressed,
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (event) {
+            _handleTapDown(event);
+            RoomOrderPaiting.globalKey.currentState?.updateRoom(_isPressed, newRoomBounds, const  Offset(0, 0));
+          },
+          child: _isPressed ? const SizedBox.shrink() : CustomPaint(
+            painter: DefaultRoomPainter(
+              bounds: newRoomBounds,
+              offset: Offset(-minX, -minY),
+            ),
           ),
         ),
-      ),
     );
   }
 }
@@ -258,57 +267,82 @@ class _PointInPolygonChecker {
 
 }
 
-class _RoomPainter extends CustomPainter {
+abstract class BaseRoomPainter extends CustomPainter {
   final RoomBounds bounds;
-  final Offset offset; // Смещение для корректного отображения
-  final bool isPressed;
+  final Offset offset;
 
-  _RoomPainter({
-    required this.bounds, 
+  BaseRoomPainter({
+    required this.bounds,
     required this.offset,
-    required this.isPressed,});
+  });
+
+  // Общие методы для обоих классов
+  Path createPath() {
+    final path = Path();
+    path.moveTo(bounds.bounds[0].x + offset.dx, bounds.bounds[0].y + offset.dy);
+    for(int i = 1; i < bounds.bounds.length; i++) {
+      path.lineTo(bounds.bounds[i].x + offset.dx, bounds.bounds[i].y + offset.dy);
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  bool hitTest(Offset position) {
+    return createPath().contains(position);
+  }
+}
+
+// Класс для обычного состояния
+class DefaultRoomPainter extends BaseRoomPainter {
+  DefaultRoomPainter({
+    required super.bounds,
+    required super.offset,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color =  isPressed 
-          ? const Color.fromARGB(255, 104, 65, 221).withOpacity(0.3) 
-          : const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
+      ..color = const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
-    final strokePaint = Paint() // Добавляем обводку для наглядности
-      ..color = isPressed 
-          ? const Color.fromARGB(255, 55, 32, 126)
-          : const Color.fromARGB(255, 228, 125, 8)
+    final strokePaint = Paint()
+      ..color = const Color.fromARGB(255, 228, 125, 8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    final path = Path();
-    
-    // Применяем смещение к координатам
-    path.moveTo(bounds.bounds[0].x + offset.dx, bounds.bounds[0].y + offset.dy);
-    
-    for(int i = 1; i < bounds.bounds.length; i++) {
-      path.lineTo(bounds.bounds[i].x + offset.dx, bounds.bounds[i].y + offset.dy);
-    }
-    
-    path.close();
+    final path = createPath();
     canvas.drawPath(path, paint);
     canvas.drawPath(path, strokePaint);
   }
 
   @override
-  bool hitTest(Offset position) {
-    final path = Path();
-    path.moveTo(bounds.bounds[0].x + offset.dx, bounds.bounds[0].y + offset.dy);
-    for(int i = 1; i < bounds.bounds.length; i++) {
-      path.lineTo(bounds.bounds[i].x + offset.dx, bounds.bounds[i].y + offset.dy);
-    }
-    path.close();
-    return path.contains(position);
+  bool shouldRepaint(covariant DefaultRoomPainter oldDelegate) => false;
+}
+
+// Класс для нажатого состояния
+class PressedRoomPainter extends BaseRoomPainter {
+  PressedRoomPainter({
+    required super.bounds,
+    required super.offset,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color.fromARGB(255, 104, 65, 221).withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+
+    final strokePaint = Paint()
+      ..color = const Color.fromARGB(255, 55, 32, 126)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final path = createPath();
+    canvas.drawPath(path, paint);
+    canvas.drawPath(path, strokePaint);
   }
 
   @override
-  bool shouldRepaint(covariant _RoomPainter oldDelegate) => 
-      isPressed != oldDelegate.isPressed; 
+  bool shouldRepaint(covariant PressedRoomPainter oldDelegate) => false;
 }

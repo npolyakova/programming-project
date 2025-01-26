@@ -18,8 +18,6 @@ class PathPaiting extends StatefulWidget
     required this.mapData,
     required this.transformOffset
   });
-  
-  
   @override
   State<PathPaiting> createState() => _PathContentState();
 }

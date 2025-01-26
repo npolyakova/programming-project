@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:application_front/UI/widgets/MapWidgets/PathContainer.dart';
+import 'package:application_front/UI/widgets/MapWidgets/RoomOrderWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -138,6 +139,7 @@ class _InteractiveMap extends State<InteractiveMap>
                         transformOffset: calculatePosition  // Передаем функцию трансформации
                       );
                     }),
+                    RoomOrderPaiting( key: RoomOrderPaiting.globalKey,),
                     PathPaiting(
                      key: PathPaiting.globalKey,
                      mapData: _mapData,
