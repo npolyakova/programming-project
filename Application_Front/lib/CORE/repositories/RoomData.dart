@@ -141,7 +141,9 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
   bool _isPressed = false;
   Timer? _timer;
   late double minX, minY;
+  int indexRoomClick = 0;
 
+  RoomBounds? boundsOffset;
 
   late List<Vector2> boundsClick;
 
@@ -154,6 +156,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
       setState(()
       {
         _isPressed = true;
+        indexRoomClick = RoomOrderPaiting.globalKey.currentState!.addRoomClick(boundsOffset!, const  Offset(0, 0), indexRoomClick);
       });
       widget.onTap(widget.data.name, widget.data.id);
       
@@ -163,7 +166,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
         setState(()
         {
           _isPressed = false;
-          RoomOrderPaiting.globalKey.currentState?.updateRoom(_isPressed, null, null);
+          RoomOrderPaiting.globalKey.currentState?.removeRoom(indexRoomClick);
         });
       });
     }
@@ -198,7 +201,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
                     );
                 }).toList();
     
-    final newRoomBounds = RoomBounds(id: widget.data.bounds.id, bounds: boundsClick);
+    boundsOffset = RoomBounds(id: widget.data.bounds.id, bounds: boundsClick);
 
     return Positioned(
       left: minX,
@@ -209,11 +212,10 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
           behavior: HitTestBehavior.translucent,
           onPointerDown: (event) {
             _handleTapDown(event);
-            RoomOrderPaiting.globalKey.currentState?.updateRoom(_isPressed, newRoomBounds, const  Offset(0, 0));
           },
           child: _isPressed ? const SizedBox.shrink() : CustomPaint(
             painter: DefaultRoomPainter(
-              bounds: newRoomBounds,
+              bounds: boundsOffset!,
               offset: Offset(-minX, -minY),
             ),
           ),
