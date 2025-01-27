@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class SimpleButton {
   final Color backgroundColor;
-  ValueNotifier<bool> _isLock = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isLock = ValueNotifier<bool>(false);
 
   SimpleButton({required this.backgroundColor});
 

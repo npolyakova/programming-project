@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:test/test.dart';
 
 import 'package:flutter/material.dart';
 
@@ -125,7 +126,7 @@ class _ClickableRoomBounds extends StatefulWidget {
   final Function(String name, int id) onTap;
   final Function(Offset p1) transformOffset;
 
-  _ClickableRoomBounds({
+  const _ClickableRoomBounds({
     required this.data,
     required this.onTap, required this.transformOffset,
   });
@@ -140,16 +141,20 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
   Timer? _timer;
   late double minX, minY;
 
-  void _handleTapDown(TapDownDetails details) {
+  late List<Vector2> boundsClick;
+
+  void _handleTapDown(PointerDownEvent details) {
+    
     final globalX = details.localPosition.dx + minX;
     final globalY = details.localPosition.dy + minY;
-    if (widget.data.isClickInside(globalX, globalY)) {
+
+    if (_PointInPolygonChecker.isPointInPolygon(boundsClick, globalX, globalY)) {
       setState(() => _isPressed = true);
       widget.onTap(widget.data.name, widget.data.id);
       
       _timer?.cancel();
       
-      _timer = Timer(Duration(milliseconds: 1000), () {
+      _timer = Timer(const Duration(milliseconds: 300), () {
         setState(() => _isPressed = false);
       });
     }
@@ -163,6 +168,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
 
   @override
   Widget build(BuildContext context) {
+    
     minX = double.infinity;
     minY = double.infinity;
     double maxX = double.negativeInfinity;
@@ -176,23 +182,25 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
         maxY = max(maxY, transformedPoint.dy);
       }
 
-    final newBounds = widget.data.bounds.bounds.map((bound) {
+    boundsClick = widget.data.bounds.bounds.map((bound) {
                     return Vector2(
                         x: widget.transformOffset(Offset(bound.x, bound.y)).dx,
                         y: widget.transformOffset(Offset(bound.x, bound.y)).dy
                     );
                 }).toList();
     
-    final newRoomBounds = RoomBounds(id: widget.data.bounds.id, bounds: newBounds);
+    final newRoomBounds = RoomBounds(id: widget.data.bounds.id, bounds: boundsClick);
 
     return Positioned(
       left: minX,
       top: minY,
       width: maxX - minX,
       height: maxY - minY,
-      child: GestureDetector(
+      child: Listener(
         behavior: HitTestBehavior.translucent,
-        onTapDown: _handleTapDown,
+        onPointerDown: (event) {
+          _handleTapDown(event);
+        },
         child: CustomPaint(
           painter: _RoomPainter(
             bounds: newRoomBounds,
@@ -205,43 +213,29 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
   }
 }
 
-
+class CrossSegmentFlag {
+  bool value = false;
+}
 class _PointInPolygonChecker {
   static get math => null;
 
-  /// Проверяет, находится ли точка внутри полигона
+  
   static bool isPointInPolygon(List<Vector2> polygon, double px, double py) {
-    if (polygon.length < 3) return false;
+    int intersections = 0;
+    int count = polygon.length;
 
-      px = (px * 10).round() / 100;
-      py = (py * 10).round() / 100;
-      
-      const double EPSILON = 0.1; 
-      
-      int crossings = 0;
-      for (int i = 0; i < polygon.length; i++) {
-        int j = (i + 1) % polygon.length;
-       // print('Edge ${i}->${j}: (${polygon[i].x},${polygon[i].y}) -> (${polygon[j].x},${polygon[j].y})');
-        // Проверка, находится ли Y-координата точки между Y-координатами вершин
-        if ((polygon[i].y <= py && py < polygon[j].y) || 
-            (polygon[j].y <= py && py < polygon[i].y)) {
-          
-          // Вычисляем X-координату пересечения
-          double x = polygon[i].x + 
-                    (py - polygon[i].y) * 
-                    (polygon[j].x - polygon[i].x) / 
-                    (polygon[j].y - polygon[i].y);
-                    
-          // Если точка находится левее линии - считаем пересечение
-          if (px < x + EPSILON) {
-            crossings++;
-           // print('Crossing at x=$x (point.x=$px)');
-          }
-        }
+    for (int i = 0; i < count; i++) {
+      Vector2 vertex1 = polygon[i];
+      Vector2 vertex2 = polygon[(i + 1) % count];
+
+      // Проверяем, пересекает ли горизонтальный луч сторону многоугольника
+      if (((vertex1.y > py) != (vertex2.y > py)) &&
+          (px < (vertex2.x - vertex1.x) * (py - vertex1.y) / (vertex2.y - vertex1.y) + vertex1.x)) {
+        intersections++;
       }
-      
-      //print('Point ($px,$py) has $crossings crossings');
-      return (crossings % 2) == 0;
+    }
+    // Если количество пересечений нечётное, точка внутри
+    return (intersections % 2 != 0);
   }
   static double isLeft(Vector2 p0, Vector2 p1, Vector2 point) {
   return ((p1.x - p0.x) * (point.y - p0.y) - 
@@ -262,14 +256,6 @@ class _PointInPolygonChecker {
       }); 
     }
 
-  // Добавим метод для отладки
-  static void debugPrint(List<Vector2> polygon, double px, double py) {
-    print('Checking point ($px, $py)');
-    for (var point in polygon) {
-      print('Polygon point: (${point.x}, ${point.y})');
-    }
-    //print('Result: ${isPointInPolygon(polygon, px, py)}');
-  }
 }
 
 class _RoomPainter extends CustomPainter {
@@ -286,16 +272,16 @@ class _RoomPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color =  isPressed 
-          ? Colors.blue.withOpacity(0.3) 
+          ? const Color.fromARGB(255, 104, 65, 221).withOpacity(0.3) 
           : const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
     final strokePaint = Paint() // Добавляем обводку для наглядности
       ..color = isPressed 
-          ? const Color.fromARGB(255, 0, 78, 141)
+          ? const Color.fromARGB(255, 55, 32, 126)
           : const Color.fromARGB(255, 228, 125, 8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 1.5;
 
     final path = Path();
     

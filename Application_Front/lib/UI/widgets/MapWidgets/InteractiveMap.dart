@@ -48,15 +48,16 @@ class _InteractiveMap extends State<InteractiveMap>
     _mapImage = SvgPicture.asset(
       'Resources/MainMap.svg',
       fit: BoxFit.contain,
-      allowDrawingOutsideViewBox: true,
+      allowDrawingOutsideViewBox: false,
     );
 
     super.initState();
   }
 
   Future<void> _initializeData() async {
-    if(_isDataLoaded)
+    if(_isDataLoaded) {
       return;
+    }
     try {
       _originalSvgSize = await getSvgSize('Resources/MainMap.svg');
       await _mapData.GetRoomData(_originalSvgSize);
@@ -76,7 +77,7 @@ class _InteractiveMap extends State<InteractiveMap>
       future: _initializeData(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         
         if (snapshot.hasError) {
@@ -86,7 +87,7 @@ class _InteractiveMap extends State<InteractiveMap>
         return Container(
           child: InteractiveViewer(
             transformationController: _coordinator?.transformationController,
-            boundaryMargin: EdgeInsets.all(20),
+            boundaryMargin: const EdgeInsets.all(20),
             scaleFactor: 1.5,
             minScale: 0.5,
             maxScale: 100,
@@ -132,13 +133,16 @@ class _InteractiveMap extends State<InteractiveMap>
                       alignment: AlignmentDirectional.topStart, 
                       child: _mapImage
                     ),
-                    ..._mapData.rooms.values.map((room) {
+                    ...MapData.GetRooms.values.map((room) {
                       return room.GetRoomButton(
                         widget.onRoomTap,
                         transformOffset: calculatePosition  // Передаем функцию трансформации
                       );
-                    }).toList(),
-                    PathPaiting(startPoint: 1, endPoint: 2, mapData: _mapData),
+                    }),
+                    PathPaiting(
+                     key: PathPaiting.globalKey,
+                     mapData: _mapData,
+                     transformOffset: calculatePosition),
                   ],
                 );
               }
