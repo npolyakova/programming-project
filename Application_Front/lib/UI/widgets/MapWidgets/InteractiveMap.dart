@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:application_front/UI/widgets/MapWidgets/PathContainer.dart';
+import 'package:application_front/UI/widgets/MapWidgets/RoomOrderWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -21,7 +22,6 @@ class InteractiveMap extends StatefulWidget
   {
     return _InteractiveMap();
   }
-  
 }
 
 class _InteractiveMap extends State<InteractiveMap>
@@ -129,9 +129,9 @@ class _InteractiveMap extends State<InteractiveMap>
 
                 return Stack(
                   children: [
-                    Align(
+                    const Align(
                       alignment: AlignmentDirectional.topStart, 
-                      child: _mapImage
+                      //child: _mapImage
                     ),
                     ...MapData.GetRooms.values.map((room) {
                       return room.GetRoomButton(
@@ -139,6 +139,7 @@ class _InteractiveMap extends State<InteractiveMap>
                         transformOffset: calculatePosition  // Передаем функцию трансформации
                       );
                     }),
+                    RoomOrderPaiting( key: RoomOrderPaiting.globalKey,),
                     PathPaiting(
                      key: PathPaiting.globalKey,
                      mapData: _mapData,

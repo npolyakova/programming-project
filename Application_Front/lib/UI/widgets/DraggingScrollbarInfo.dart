@@ -37,6 +37,12 @@ class RouteSheetState extends State<RouteSheet> {
 
   late RouteSheetDisplayMode _displayMode;
 
+  final ValueNotifier<bool> isVisibleNotifier = ValueNotifier(true);
+
+  double _sheetPosition = 1.0;
+
+  bool get canBuildRoute => _fromRoom != null && _toRoom != null;
+
   @override
   void initState() {
     super.initState();
@@ -77,10 +83,36 @@ class RouteSheetState extends State<RouteSheet> {
         return _buildRoomSelectionMode();
       case RouteSheetDisplayMode.routeButtonStart:
         return _buildrouMode();
-        case RouteSheetDisplayMode.routeSelection:
+      case RouteSheetDisplayMode.routeSelection:
         return _buildRouteInfo();
     }
   }
+
+  List<double> _buildTargetSnapSize(RouteSheetDisplayMode mode)
+  {
+    switch(mode)
+    {
+      case RouteSheetDisplayMode.roomSelection:
+        return const [0.35, 0.9] ;
+      case RouteSheetDisplayMode.routeButtonStart:
+        return const [0.15, 0.35, 0.9];
+      case RouteSheetDisplayMode.routeSelection:
+        return const [0.04, 0.15, 0.35, 0.9];
+    }
+  }
+  double _buildTargetSnapCurrent(RouteSheetDisplayMode mode)
+  {
+    switch(mode)
+    {
+      case RouteSheetDisplayMode.roomSelection:
+        return 0.35;
+      case RouteSheetDisplayMode.routeButtonStart:
+        return 0.35;
+      case RouteSheetDisplayMode.routeSelection:
+        return 0.15;
+    }
+  }
+
 
   Widget _buildRouteInfo()
   {
@@ -109,6 +141,13 @@ class RouteSheetState extends State<RouteSheet> {
   Widget _buildrouMode() {
     return Column(
       children: [
+         const Text('Маршрут',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
           InkWell(
           onTap: () => _showSearchHelper(context, setFromRoom),
           child: Container(
@@ -157,13 +196,12 @@ class RouteSheetState extends State<RouteSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          _buildBuildRouteButton(),
       ],
     );
   }
 
   Widget _buildRoomSelectionMode() {
-    return Column(
+    var column = Column(
       children: [
         Text(_currentRoom?.name ?? 'Выберите комнату',
           style: const TextStyle(
@@ -203,10 +241,10 @@ class RouteSheetState extends State<RouteSheet> {
         ),
       ],
     );
+
+    return column;
   }
   Widget _buildBuildRouteButton() {
-    bool canBuildRoute = _fromRoom != null && _toRoom != null;
-    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: ElevatedButton(
@@ -226,24 +264,48 @@ class RouteSheetState extends State<RouteSheet> {
     );
   }
 
-Future<void> _showSearchHelper(BuildContext context, Function(RoomData) setRoomData) async {
-  final result = await showModalBottomSheet<RoomData>(
-    context: context,
-    isScrollControlled: true, 
-    builder: (BuildContext context) {
-      return SearchHelperWidget(
-        onRoomSelected: (RoomData room) {
-          Navigator.pop(context, room);
-        },
-      );
-    },
-  );
-  
-  if (result != null)
-  {
-    setRoomData(result);
+  Future<void> _showSearchHelper(BuildContext context, Function(RoomData) setRoomData) async {
+    final result = await showModalBottomSheet<RoomData>(
+      context: context,
+      isScrollControlled: true, 
+      builder: (BuildContext context) {
+        return SearchHelperWidget(
+          onRoomSelected: (RoomData room) {
+            Navigator.pop(context, room);
+          },
+        );
+      },
+    );
+    
+    if (result != null)
+    {
+      setRoomData(result);
+    }
   }
-}
+
+  Widget buildCloseButton() {
+    return Positioned(
+      right: 8,
+      top: 8,
+      child: GestureDetector(
+        onTap: () {
+          updateDisplayMode(RouteSheetDisplayMode.routeButtonStart);
+        },
+        child: Container(
+          padding: EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Icon(
+            Icons.close,
+            size: 24,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
 
  void _buildRoute() {
     if (_fromRoom != null && _toRoom != null) {
@@ -255,22 +317,75 @@ Future<void> _showSearchHelper(BuildContext context, Function(RoomData) setRoomD
       widget.onRouteChanged?.call(_fromRoom, _toRoom);
     }
   }
-  @override
-  Widget build(BuildContext context) {
-    var selectedRoomName = "";
-    if(_currentRoom != null) {
-      selectedRoomName = _currentRoom!.name;
-    }
-    return DraggableScrollableSheet(
+
+  Widget _buildDraggableScrollableSheet()
+  {
+    
+    var minChildSize = _buildTargetSnapSize(_displayMode)[0];
+
+    return  DraggableScrollableSheet(
       controller: widget.dragController,
-      initialChildSize: _displayMode == RouteSheetDisplayMode.routeSelection ? 0.15 : 0.35,
-      minChildSize: 0.04,
+      initialChildSize: _buildTargetSnapCurrent(_displayMode),
+      minChildSize: minChildSize,
       maxChildSize: 0.9,
       snapAnimationDuration: const Duration(milliseconds: 300),
       snap: true,
-      snapSizes: const [0.04, 0.15, 0.35, 0.9],
+      snapSizes: _buildTargetSnapSize(_displayMode),
       builder: (context, scrollController) {
-        return Container(
+        
+        widget.dragController.addListener(() {
+            _sheetPosition = scrollController.position.viewportDimension / 
+                            MediaQuery.of(context).size.height;
+            isVisibleNotifier.value = _sheetPosition > (minChildSize + 0.15);
+        });
+        var content = _buildTargetWidget(_displayMode);
+        isVisibleNotifier.value = _sheetPosition > (minChildSize + 0.15);
+         var updateBuildContent = ValueListenableBuilder<bool>(
+          valueListenable: isVisibleNotifier,
+          builder: (context, isVisible, child) 
+          {
+            final currentSheetSize = widget.dragController.size;
+            final shouldBeVisible = currentSheetSize > (minChildSize + 0.15);
+            if (isVisible != shouldBeVisible) {
+              // Обновляем notifier в следующем кадре
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                isVisibleNotifier.value = shouldBeVisible;
+              });
+            }
+            return _displayMode == RouteSheetDisplayMode.routeButtonStart ? AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: isVisible ? 1.0 : 0.0,
+              child:  content,
+            ) : content;
+          },
+        );
+
+        var stackContent = Stack(
+                children: [
+                  ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      updateBuildContent
+                    ],
+                  ),
+                  if(_displayMode == RouteSheetDisplayMode.roomSelection) 
+                    buildCloseButton(),
+                ],
+            );
+       
+        var containerContent = Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -281,74 +396,35 @@ Future<void> _showSearchHelper(BuildContext context, Function(RoomData) setRoomD
               )
             ],
           ),
-          child: ListView(
-            controller: scrollController,
-            padding: const EdgeInsets.all(16),
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const Text('Маршрут',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              // Выбор режима отображения
-              _buildTargetWidget(_displayMode)
-
-              // Остальные виджеты (информация о маршруте)
-            
-              // const Text('Информация о маршруте',
-              //   style: TextStyle(
-              //     fontSize: 14,
-              //     fontWeight: FontWeight.w500,
-              //   ),
-              // ),
-              // const SizedBox(height: 8),
-
-              // // Неинтерактивные информационные поля
-              // Container(
-              //   height: 40,
-              //   padding: const EdgeInsets.symmetric(horizontal: 12),
-              //   decoration: BoxDecoration(
-              //     color: Colors.grey[50],
-              //     borderRadius: BorderRadius.circular(8),
-              //   ),
-              //   alignment: Alignment.centerLeft,
-              //   child: Text('Дистанция',
-              //     style: TextStyle(color: Colors.grey[600]),
-              //   ),
-              // ),
-              // const SizedBox(height: 8),
-
-              // Container(
-              //   height: 40,
-              //   padding: const EdgeInsets.symmetric(horizontal: 12),
-              //   decoration: BoxDecoration(
-              //     color: Colors.grey[50],
-              //     borderRadius: BorderRadius.circular(8),
-              //   ),
-              //   alignment: Alignment.centerLeft,
-              //   child: Text('Время',
-              //     style: TextStyle(color: Colors.grey[600]),
-              //   ),
-              // ),
-              //... // Остальные виджеты из исходного кода
-            ],
-          ),
+          child: stackContent
         );
+        return containerContent;
       },
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var selectedRoomName = "";
+    if(_currentRoom != null) {
+      selectedRoomName = _currentRoom!.name;
+    }
+    var sheet = _buildDraggableScrollableSheet();
+
+    var stack = Stack(
+      children: [
+          sheet,
+          if(_displayMode == RouteSheetDisplayMode.routeButtonStart)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: _buildBuildRouteButton(),
+            ),
+          
+      ]
+    );
+
+    return stack;
   }
 }

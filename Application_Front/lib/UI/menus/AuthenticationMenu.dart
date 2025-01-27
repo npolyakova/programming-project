@@ -96,8 +96,15 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
     }
     catch(e)
     {
-      screen.ShowErrorDialog(e.toString());
-      
+      if (e.toString().contains('404') || 
+            e.toString().contains('StatusCode: 404')) {
+          screen.ShowErrorDialog('Неверный логин или пароль');
+        } else if (e.toString().contains('NetworkException') || 
+                  e.toString().contains('SocketException')) {
+          screen.ShowErrorDialog('Проверьте подключение к интернету');
+        } else {
+          screen.ShowErrorDialog('Произошла ошибка: ${e.toString()}');
+        }
     }
     finally
     {
