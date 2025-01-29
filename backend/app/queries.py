@@ -99,3 +99,17 @@ def get_graph_data(conn):
                 connections_list = [int(float(x)) for x in connections.strip('{}').split(',')]
                 graph[node_id] = connections_list
     return graph
+
+
+#Доп элементы на карте
+def get_point_interesr(query: str):
+    conn = set_connection()
+    with conn.cursor() as curs:
+        # Выполняем запрос на основе наличия параметра query
+        if query:
+            curs.execute("SELECT name, description, coordinates, id_route_point FROM extra_points WHERE name ILIKE %s OR description ILIKE %s", (query,query))
+        else:
+            curs.execute("SELECT name,description,coordinates,id_route_point FROM extra_points")
+        data_points = curs.fetchall()
+    conn.close()
+    return data_points
