@@ -100,7 +100,6 @@ def get_graph_data(conn):
                 graph[node_id] = connections_list
     return graph
 
-
 #Доп элементы на карте
 def get_point_interesr(query: str):
     conn = set_connection()
