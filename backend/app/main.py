@@ -102,7 +102,8 @@ async def get_rooms_list(request: Request, token: str = Depends(check_access_tok
                 "name": room[0],
                 "floor": room[1],
                 "id": room[2],
-                "bounds": bounds_pairs
+                "bounds": bounds_pairs,
+                "short_name": room[4]
             })
 
         return {
