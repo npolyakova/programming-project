@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
 class FirstScreen extends StatelessWidget {
+  const FirstScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Первый экран'),
+        title: const Text('Первый экран'),
       ),
       body: Center(
         child: ElevatedButton(
-          child: Text('Перейти ко второму экрану'),
+          child: const Text('Перейти ко второму экрану'),
           onPressed: () {
             Navigator.push(
               context,
@@ -27,13 +29,13 @@ class FirstScreen extends StatelessWidget {
 class SecondScreen extends StatelessWidget {
   final String data;
 
-  SecondScreen({Key? key, required this.data}) : super(key: key);
+  const SecondScreen({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Второй экран'),
+        title: const Text('Второй экран'),
       ),
       body: Center(
         child: Text(data),

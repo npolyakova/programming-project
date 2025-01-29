@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:application_front/UI/widgets/MapWidgets/RoomOrderWidget.dart';
+import 'package:test/test.dart';
 
 import 'package:flutter/material.dart';
 
@@ -125,7 +127,7 @@ class _ClickableRoomBounds extends StatefulWidget {
   final Function(String name, int id) onTap;
   final Function(Offset p1) transformOffset;
 
-  _ClickableRoomBounds({
+  const _ClickableRoomBounds({
     required this.data,
     required this.onTap, required this.transformOffset,
   });
@@ -139,18 +141,33 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
   bool _isPressed = false;
   Timer? _timer;
   late double minX, minY;
+  int indexRoomClick = 0;
 
-  void _handleTapDown(TapDownDetails details) {
+  RoomBounds? boundsOffset;
+
+  late List<Vector2> boundsClick;
+
+  void _handleTapDown(PointerDownEvent details) {
+    
     final globalX = details.localPosition.dx + minX;
     final globalY = details.localPosition.dy + minY;
-    if (widget.data.isClickInside(globalX, globalY)) {
-      setState(() => _isPressed = true);
+
+    if (_PointInPolygonChecker.isPointInPolygon(boundsClick, globalX, globalY)) {
+      setState(()
+      {
+        _isPressed = true;
+        indexRoomClick = RoomOrderPaiting.globalKey.currentState!.addRoomClick(boundsOffset!, const  Offset(0, 0), indexRoomClick);
+      });
       widget.onTap(widget.data.name, widget.data.id);
       
       _timer?.cancel();
       
-      _timer = Timer(Duration(milliseconds: 1000), () {
-        setState(() => _isPressed = false);
+      _timer = Timer(const Duration(milliseconds: 300), () {
+        setState(()
+        {
+          _isPressed = false;
+          RoomOrderPaiting.globalKey.currentState?.removeRoom(indexRoomClick);
+        });
       });
     }
   }
@@ -163,6 +180,7 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
 
   @override
   Widget build(BuildContext context) {
+    
     minX = double.infinity;
     minY = double.infinity;
     double maxX = double.negativeInfinity;
@@ -176,72 +194,59 @@ class _ClickableRoomBoundsState extends State<_ClickableRoomBounds> {
         maxY = max(maxY, transformedPoint.dy);
       }
 
-    final newBounds = widget.data.bounds.bounds.map((bound) {
+    boundsClick = widget.data.bounds.bounds.map((bound) {
                     return Vector2(
                         x: widget.transformOffset(Offset(bound.x, bound.y)).dx,
                         y: widget.transformOffset(Offset(bound.x, bound.y)).dy
                     );
                 }).toList();
     
-    final newRoomBounds = RoomBounds(id: widget.data.bounds.id, bounds: newBounds);
+    boundsOffset = RoomBounds(id: widget.data.bounds.id, bounds: boundsClick);
 
     return Positioned(
       left: minX,
       top: minY,
       width: maxX - minX,
       height: maxY - minY,
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTapDown: _handleTapDown,
-        child: CustomPaint(
-          painter: _RoomPainter(
-            bounds: newRoomBounds,
-            offset: Offset(-minX, -minY),
-            isPressed: _isPressed,
+      child: Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (event) {
+            _handleTapDown(event);
+          },
+          child: _isPressed ? const SizedBox.shrink() : CustomPaint(
+            painter: DefaultRoomPainter(
+              bounds: boundsOffset!,
+              offset: Offset(-minX, -minY),
+            ),
           ),
         ),
-      ),
     );
   }
 }
 
-
+class CrossSegmentFlag {
+  bool value = false;
+}
 class _PointInPolygonChecker {
   static get math => null;
 
-  /// Проверяет, находится ли точка внутри полигона
+  
   static bool isPointInPolygon(List<Vector2> polygon, double px, double py) {
-    if (polygon.length < 3) return false;
+    int intersections = 0;
+    int count = polygon.length;
 
-      px = (px * 10).round() / 100;
-      py = (py * 10).round() / 100;
-      
-      const double EPSILON = 0.1; 
-      
-      int crossings = 0;
-      for (int i = 0; i < polygon.length; i++) {
-        int j = (i + 1) % polygon.length;
-       // print('Edge ${i}->${j}: (${polygon[i].x},${polygon[i].y}) -> (${polygon[j].x},${polygon[j].y})');
-        // Проверка, находится ли Y-координата точки между Y-координатами вершин
-        if ((polygon[i].y <= py && py < polygon[j].y) || 
-            (polygon[j].y <= py && py < polygon[i].y)) {
-          
-          // Вычисляем X-координату пересечения
-          double x = polygon[i].x + 
-                    (py - polygon[i].y) * 
-                    (polygon[j].x - polygon[i].x) / 
-                    (polygon[j].y - polygon[i].y);
-                    
-          // Если точка находится левее линии - считаем пересечение
-          if (px < x + EPSILON) {
-            crossings++;
-           // print('Crossing at x=$x (point.x=$px)');
-          }
-        }
+    for (int i = 0; i < count; i++) {
+      Vector2 vertex1 = polygon[i];
+      Vector2 vertex2 = polygon[(i + 1) % count];
+
+      // Проверяем, пересекает ли горизонтальный луч сторону многоугольника
+      if (((vertex1.y > py) != (vertex2.y > py)) &&
+          (px < (vertex2.x - vertex1.x) * (py - vertex1.y) / (vertex2.y - vertex1.y) + vertex1.x)) {
+        intersections++;
       }
-      
-      //print('Point ($px,$py) has $crossings crossings');
-      return (crossings % 2) == 0;
+    }
+    // Если количество пересечений нечётное, точка внутри
+    return (intersections % 2 != 0);
   }
   static double isLeft(Vector2 p0, Vector2 p1, Vector2 point) {
   return ((p1.x - p0.x) * (point.y - p0.y) - 
@@ -262,67 +267,84 @@ class _PointInPolygonChecker {
       }); 
     }
 
-  // Добавим метод для отладки
-  static void debugPrint(List<Vector2> polygon, double px, double py) {
-    print('Checking point ($px, $py)');
-    for (var point in polygon) {
-      print('Polygon point: (${point.x}, ${point.y})');
+}
+
+abstract class BaseRoomPainter extends CustomPainter {
+  final RoomBounds bounds;
+  final Offset offset;
+
+  BaseRoomPainter({
+    required this.bounds,
+    required this.offset,
+  });
+
+  // Общие методы для обоих классов
+  Path createPath() {
+    final path = Path();
+    path.moveTo(bounds.bounds[0].x + offset.dx, bounds.bounds[0].y + offset.dy);
+    for(int i = 1; i < bounds.bounds.length; i++) {
+      path.lineTo(bounds.bounds[i].x + offset.dx, bounds.bounds[i].y + offset.dy);
     }
-    //print('Result: ${isPointInPolygon(polygon, px, py)}');
+    path.close();
+    return path;
+  }
+
+  @override
+  bool hitTest(Offset position) {
+    return createPath().contains(position);
   }
 }
 
-class _RoomPainter extends CustomPainter {
-  final RoomBounds bounds;
-  final Offset offset; // Смещение для корректного отображения
-  final bool isPressed;
-
-  _RoomPainter({
-    required this.bounds, 
-    required this.offset,
-    required this.isPressed,});
+// Класс для обычного состояния
+class DefaultRoomPainter extends BaseRoomPainter {
+  DefaultRoomPainter({
+    required super.bounds,
+    required super.offset,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color =  isPressed 
-          ? Colors.blue.withOpacity(0.3) 
-          : const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
+      ..color = const Color.fromARGB(255, 180, 142, 72).withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
-    final strokePaint = Paint() // Добавляем обводку для наглядности
-      ..color = isPressed 
-          ? const Color.fromARGB(255, 0, 78, 141)
-          : const Color.fromARGB(255, 228, 125, 8)
+    final strokePaint = Paint()
+      ..color = const Color.fromARGB(255, 228, 125, 8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 1.5;
 
-    final path = Path();
-    
-    // Применяем смещение к координатам
-    path.moveTo(bounds.bounds[0].x + offset.dx, bounds.bounds[0].y + offset.dy);
-    
-    for(int i = 1; i < bounds.bounds.length; i++) {
-      path.lineTo(bounds.bounds[i].x + offset.dx, bounds.bounds[i].y + offset.dy);
-    }
-    
-    path.close();
+    final path = createPath();
     canvas.drawPath(path, paint);
     canvas.drawPath(path, strokePaint);
   }
 
   @override
-  bool hitTest(Offset position) {
-    final path = Path();
-    path.moveTo(bounds.bounds[0].x + offset.dx, bounds.bounds[0].y + offset.dy);
-    for(int i = 1; i < bounds.bounds.length; i++) {
-      path.lineTo(bounds.bounds[i].x + offset.dx, bounds.bounds[i].y + offset.dy);
-    }
-    path.close();
-    return path.contains(position);
+  bool shouldRepaint(covariant DefaultRoomPainter oldDelegate) => false;
+}
+
+// Класс для нажатого состояния
+class PressedRoomPainter extends BaseRoomPainter {
+  PressedRoomPainter({
+    required super.bounds,
+    required super.offset,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color.fromARGB(255, 104, 65, 221).withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+
+    final strokePaint = Paint()
+      ..color = const Color.fromARGB(255, 55, 32, 126)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final path = createPath();
+    canvas.drawPath(path, paint);
+    canvas.drawPath(path, strokePaint);
   }
 
   @override
-  bool shouldRepaint(covariant _RoomPainter oldDelegate) => 
-      isPressed != oldDelegate.isPressed; 
+  bool shouldRepaint(covariant PressedRoomPainter oldDelegate) => false;
 }

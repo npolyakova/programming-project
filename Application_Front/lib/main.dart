@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget
       routes: 
       {
         '/auth': (context) => AuthenticationMenu(),
-        '/main': (context) => MainScreen()
+        '/main': (context) => const MainScreen()
       },
       initialRoute: '/auth',
     );

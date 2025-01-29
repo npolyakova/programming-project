@@ -29,7 +29,7 @@ class _MainMenuState extends State<MainMenu>
               'You have pushed the button this many times:',
             ),
             Text(
-              '$textDeebug',
+              textDeebug,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AuthenticationMenu extends StatefulWidget {
-  AuthenticationMenu({super.key});
+  const AuthenticationMenu({super.key});
 
   @override
   State<AuthenticationMenu> createState() => _AuthenticationMenuState();
@@ -58,9 +58,9 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
       [
         title,titleDescription,
         const SizedBox(height: _verticalSpacing),
-        writeField.GetInput('Введите логин', loginInput, Icon(Icons.person_outline) ,bcColor),
+        writeField.GetInput('Введите логин', loginInput, const Icon(Icons.person_outline) ,bcColor),
         const SizedBox(height: _smallSpacing),
-        writeField.GetInput('Введите пароль', passwordInput, Icon(Icons.lock_outline) ,bcColor, true),
+        writeField.GetInput('Введите пароль', passwordInput, const Icon(Icons.lock_outline) ,bcColor, true),
         const SizedBox(height: _verticalSpacing),
         interactiveButton.GetButton('Войти', ClickEnterAuth, Colors.white ,'Выполняется вход...'),
         const Spacer(),
@@ -96,8 +96,15 @@ class _AuthenticationMenuState extends State<AuthenticationMenu> {
     }
     catch(e)
     {
-      screen.ShowErrorDialog(e.toString());
-      
+      if (e.toString().contains('404') || 
+            e.toString().contains('StatusCode: 404')) {
+          screen.ShowErrorDialog('Неверный логин или пароль');
+        } else if (e.toString().contains('NetworkException') || 
+                  e.toString().contains('SocketException')) {
+          screen.ShowErrorDialog('Проверьте подключение к интернету');
+        } else {
+          screen.ShowErrorDialog('Произошла ошибка: ${e.toString()}');
+        }
     }
     finally
     {

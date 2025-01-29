@@ -14,10 +14,11 @@ class Authentication
 
   static bool debug = true;
 
-  Future<void> Login(LoginRequest login, [Function? OnComplited = null]) async
+  Future<void> Login(LoginRequest login, [Function? OnComplited]) async
   {
-    if(CurrentUser != null)
+    if(CurrentUser != null) {
       throw Exception('Вы уже вошли');
+    }
 
     _currentUser = await _Login(login);
 
@@ -43,6 +44,12 @@ class Authentication
     _currentUser = null;
   }
 
-  
+  static void CheckAuth()
+  {
+    if(Authentication.CurrentUser == null)
+    {
+      throw Exception('Вы не авторизованы');
+    }
+  }
 
 }
