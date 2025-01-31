@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Security, Depends, HTTPException, Body, Qu
 from fastapi.security import APIKeyHeader
 import jwt
 from jwt import InvalidTokenError
-
+from datetime import datetime
 from app.config import JWT_SECRET
 from app import queries
 
@@ -68,9 +68,11 @@ async def get_user_token(data = Body()):
     # Проверяем пароль
     if(password !=user_password):
     	raise HTTPException(status_code=401, detail="Invalid password")
-    
+
+    expiration_time = datetime.utcnow() + timedelta(minutes=5)
+
     # Генерируем токен авторизации
-    token = jwt.encode({'sub': str(user_id)}, key=JWT_SECRET, algorithm='HS256')
+    token = jwt.encode({'sub': str(user_id),'exp': expiration_time}, key=JWT_SECRET, algorithm='HS256')
     return {"message": "User token", "token": token}
 
 
@@ -117,3 +119,10 @@ async def get_rooms_list(request: Request, token: str = Depends(check_access_tok
 def get_route(room_start:int, room_end:int):
     route = queries.get_rooms_point(room_start,room_end)
     return {"route": route}
+
+#Доп элементы на карте
+@app.get("/points")
+def get_point(query: str = Query(None)):
+    query_str = f"%{query}%" if query else None
+    points_data = queries.get_point_interesr(query_str)
+    return {"points": points_data}
