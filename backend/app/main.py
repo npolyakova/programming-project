@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Security, Depends, HTTPException, Body, Qu
 from fastapi.security import APIKeyHeader
 import jwt
 from jwt import InvalidTokenError
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.config import JWT_SECRET
 from app import queries
 
