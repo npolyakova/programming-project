@@ -3,17 +3,16 @@ services:
     build: ./backend
     ports:
       - "8080:8080"
-    # network_mode: "host"
 
   postgres:
-    image: postgres:16
+    build: ./db
     environment:
       POSTGRES_DB: "app_db"
       POSTGRES_USER: "app_user"
       POSTGRES_PASSWORD: "23bjf8Gewb3"
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
-      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - appdb-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
