@@ -112,3 +112,20 @@ def get_point_interesr(query: str):
         data_points = curs.fetchall()
     conn.close()
     return data_points
+
+#Refresh токены
+def save_refresh_token(user_id: int, refresh_token: str):
+    conn = set_connection()
+    with conn.cursor() as curs:
+        curs.execute("UPDATE users SET refresh_token = %s WHERE id = %s", (refresh_token,user_id))
+        token = curs.fetchall()
+    conn.close()
+    return token
+
+def get_refresh_token(user_id: int):
+    conn = set_connection()
+    with conn.cursor() as curs:
+        curs.execute("SELECT refresh_token FROM users WHERE id = %s", (user_id,))
+        token = curs.fetchall()
+    conn.close()
+    return token

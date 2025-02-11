@@ -56,7 +56,6 @@ def read_root():
 #Авторизация с генерацией токена и его возвратом
 @app.post("/auth")
 async def get_user_token(data = Body()):
-    # Используем вынесенную функцию для выполнения SQL-запроса
     login = data["login"]
     password = data["password"]
     user = queries.auth_sql_query(login)
@@ -65,15 +64,25 @@ async def get_user_token(data = Body()):
        raise HTTPException(status_code=404, detail="User not found")
 
     user_id, user_password = user
-    # Проверяем пароль
-    if(password !=user_password):
-    	raise HTTPException(status_code=401, detail="Invalid password")
+    if password != user_password:
+        raise HTTPException(status_code=401, detail="Invalid password")
 
-    expiration_time = datetime.utcnow() + timedelta(minutes=5)
+    # Генерация access token
+    access_token_expiration = datetime.utcnow() + timedelta(minutes=5)
+    access_token = jwt.encode({'sub': str(user_id), 'exp': access_token_expiration}, key=JWT_SECRET, algorithm='HS256')
 
-    # Генерируем токен авторизации
-    token = jwt.encode({'sub': str(user_id),'exp': expiration_time}, key=JWT_SECRET, algorithm='HS256')
-    return {"message": "User token", "token": token}
+    # Генерация refresh token
+    refresh_token_expiration = datetime.utcnow() + timedelta(days=30)
+    refresh_token = jwt.encode({'sub': str(user_id), 'exp': refresh_token_expiration}, key=JWT_SECRET, algorithm='HS256')
+
+    # Сохранение refresh token в базе данных
+    queries.save_refresh_token(user_id, refresh_token)
+
+    return {
+        "message": "User token",
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    }
 
 
 # Пример запроса с проверкой токена
@@ -126,3 +135,32 @@ def get_point(query: str = Query(None)):
     query_str = f"%{query}%" if query else None
     points_data = queries.get_point_interesr(query_str)
     return {"points": points_data}
+
+@app.post("/refresh_token")
+async def refresh_access_token(data = Body()):
+    refresh_token = data.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="Refresh token is required")
+
+    try:
+        payload = jwt.decode(refresh_token, key=JWT_SECRET, algorithms='HS256')
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    user_id = payload.get('sub')
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid refresh token payload")
+
+    # Проверяем, что refresh token существует в базе данных
+    stored_refresh_token = queries.get_refresh_token(user_id)
+    if stored_refresh_token != refresh_token:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    # Генерация нового access token
+    access_token_expiration = datetime.utcnow() + timedelta(minutes=5)
+    new_access_token = jwt.encode({'sub': str(user_id), 'exp': access_token_expiration}, key=JWT_SECRET, algorithm='HS256')
+
+    return {
+        "message": "New access token",
+        "access_token": new_access_token
+    }
